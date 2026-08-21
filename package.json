@@ -1,0 +1,15 @@
+{
+  "name": "coldopen",
+  "version": "0.1.0",
+  "private": false,
+  "description": "COLD OPEN — a named-premise engine for artist websites. Extracts a world, derives the design from the name, and refuses to print a number it cannot source.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --experimental-strip-types --test engine/test/*.test.ts",
+    "build:site": "node --experimental-strip-types engine/src/cli.ts"
+  },
+  "keywords": ["artist-website", "generator", "design-system", "provenance"],
+  "author": "James Dare (DareDev256)"
+}
