@@ -367,12 +367,21 @@ ${(x.feed?.length ?? 0) > 0 ? `<div id="panel-feed" class="panel" aria-hidden="t
     <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
     <div class="doc-h"><span>CARRIED ON · @${esc(x.igHandle ?? '')}</span><span>${esc(w.chrome.docCode)}</span></div>
     <h3>The Feed</h3>
-    <p>Her most-talked-about posts. These are live Instagram embeds — the pictures are served by Instagram and stay attributed to her, so a post she takes down disappears from here the same day.</p>
+    <p>Her most-talked-about posts, ranked by the conversation under them. Most are live Instagram embeds — served by Instagram, attributed to her, and gone from here the same day she takes one down. Where Instagram refuses to embed a post, the tile carries its own frame and links out.</p>
     <div class="feed">
-${(x.feed ?? []).map(f => `      <figure class="feed-i">
-        <iframe src="https://www.instagram.com/${f.kind === 'reel' ? 'reel' : 'p'}/${esc(f.id)}/embed/captioned/" loading="lazy" scrolling="no" title="${esc(f.caption || f.id)}"></iframe>
-        <figcaption><b>${esc(f.comments)}</b> comments · <a href="https://www.instagram.com/${f.kind === 'reel' ? 'reel' : 'p'}/${esc(f.id)}/" target="_blank" rel="noopener">open on Instagram ↗</a></figcaption>
-      </figure>`).join('\n')}
+${(x.feed ?? []).map(f => {
+      const path = `https://www.instagram.com/${f.kind === 'reel' ? 'reel' : 'p'}/${esc(f.id)}/`;
+      const body = f.embeddable === false
+        ? `<a class="feed-card" href="${path}" target="_blank" rel="noopener" style="background-image:url('${esc(f.poster ?? '')}')">
+          <span class="feed-play" aria-hidden="true"></span>
+          <span class="feed-cap">${esc(f.caption)}</span>
+        </a>`
+        : `<iframe src="${path}embed/captioned/" loading="lazy" scrolling="no" title="${esc(f.caption || f.id)}"></iframe>`;
+      return `      <figure class="feed-i">
+        ${body}
+        <figcaption><b>${esc(f.comments)}</b> comments · <a href="${path}" target="_blank" rel="noopener">open on Instagram ↗</a></figcaption>
+      </figure>`;
+    }).join('\n')}
     </div>
     <p class="alt">More at <a href="https://www.instagram.com/${esc(x.igHandle ?? '')}/" target="_blank" rel="noopener">@${esc(x.igHandle ?? '')}</a></p>
   </div>

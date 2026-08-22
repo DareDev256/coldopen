@@ -149,6 +149,18 @@ body.is-open .hero-copy{ opacity:0; transform:translateY(-28px) }
   color:#6A6252; padding:.6rem .7rem; border-top:1px solid rgba(20,19,26,.16) }
 .feed-i figcaption b{ color:#14131A; font-size:.72rem }
 .feed-i figcaption a{ color:#B4181F; text-decoration:none }
+/* A post Instagram will not embed still has to carry its own picture. Same
+   footprint as the iframe so the grid stays even next to real embeds. */
+.feed-card{ position:relative; display:block; height:520px; background-size:cover; background-position:center 28%;
+  background-color:#14131A; text-decoration:none }
+.feed-card::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.78) 100%) }
+.feed-play{ position:absolute; left:50%; top:50%; width:64px; height:64px; margin:-32px 0 0 -32px; z-index:2;
+  border-radius:50%; background:rgba(255,255,255,.92); box-shadow:0 6px 24px rgba(0,0,0,.45) }
+.feed-play::before{ content:''; position:absolute; left:25px; top:19px; border-style:solid;
+  border-width:13px 0 13px 21px; border-color:transparent transparent transparent #14131A }
+.feed-cap{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.9rem 1rem; color:#fff;
+  font-family:var(--f-mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; line-height:1.5 }
+@media (prefers-reduced-motion:no-preference){ .feed-card{ transition:transform .3s ease } .feed-card:hover{ transform:scale(1.012) } }
 .doc{ position:relative; width:min(100%,760px); max-height:86svh; overflow:auto;
   background:linear-gradient(168deg,#F6F3EA,#E6E1D4); color:#14131A; border-radius:3px;
   box-shadow:0 30px 80px ${alpha('#000000', 0.6)}; padding:clamp(1.4rem,4vw,2.6rem) }
@@ -402,6 +414,16 @@ export interface FeedPost {
    * Verified against /p/DG59aS3O__8/ on 2026-08-22.
    */
   readonly kind?: 'post' | 'reel';
+  /**
+   * Instagram refuses to embed some posts — boosted ones and some licensed
+   * audio among them — answering the embed URL with "the link may be broken,
+   * or the post may have been removed" on a white card. The post itself is
+   * perfectly alive. Set this false and supply a poster so the tile carries the
+   * work instead of Instagram's apology. Verified on DCpBNoDRtgx, 2026-08-22.
+   */
+  readonly embeddable?: boolean;
+  /** poster image for a post that cannot be embedded; required when embeddable is false */
+  readonly poster?: string;
 }
 
 export interface WebGLExtras {

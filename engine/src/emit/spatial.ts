@@ -472,6 +472,18 @@ p + p{ margin-top:1rem }
   color:#6A6252; padding:.55rem .65rem; border-top:1px solid ${alpha('#14131A', 0.16)} }
 .feed-i figcaption b{ color:#14131A; font-size:.68rem }
 .feed-i figcaption a{ color:#B4181F; text-decoration:none }
+/* A post Instagram refuses to embed still carries its own picture. Matches the
+   iframe height exactly so it sits level with real embeds in the same grid. */
+.feed-card{ position:relative; display:block; height:500px; background-size:cover; background-position:center 30%;
+  background-color:#14131A; text-decoration:none; overflow:hidden }
+.feed-card::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,0) 44%,rgba(0,0,0,.8) 100%) }
+.feed-play{ position:absolute; left:50%; top:50%; width:62px; height:62px; margin:-31px 0 0 -31px; z-index:2;
+  border-radius:50%; background:${alpha('#FBF9F3', 0.93)}; box-shadow:0 6px 22px rgba(0,0,0,.45) }
+.feed-play::before{ content:''; position:absolute; left:24px; top:18px; border-style:solid;
+  border-width:13px 0 13px 20px; border-color:transparent transparent transparent #14131A }
+.feed-cap{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.85rem .95rem; color:#FBF9F3;
+  font-family:var(--f-mono); font-size:.56rem; letter-spacing:.1em; text-transform:uppercase; line-height:1.55 }
+@media (prefers-reduced-motion:no-preference){ .feed-card{ transition:transform .3s ease } .feed-card:hover{ transform:scale(1.012) } }
 .form-msg{ font-family:var(--f-mono); font-size:.56rem; letter-spacing:.12em; margin-top:.6rem; min-height:1.1em; color:#6A6252 }
 .form-msg.ok{ color:#1B7A3E } .form-msg.err{ color:#B4181F }
 

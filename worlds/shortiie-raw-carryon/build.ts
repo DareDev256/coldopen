@@ -61,7 +61,10 @@ const world = {
     artist: 'SHORTIIE RAW',
     domain: 'shortiieraw.com',
     ground: { kind: 'image' as const, src: 'assets/yt-Xedv19NEX-E.jpg', treatment: ['grain'] as const },
-    sound: { src: 'assets/bed.mp3', label: 'PLAY', startsMuted: true },
+    // Sip Cuca, her 2025 single — the same record this world already uses for
+    // the cover and the mirror. preload="none", so it costs a visitor nothing
+    // until they press it. Shipped 404 until 2026-08-22.
+    sound: { src: 'assets/bed.mp3', label: 'PLAY SIP CUCA', startsMuted: true },
   }),
   // English leads. Portuguese and Spanish are one click away because she is
   // billed as a trilingual artist — allowed only against the sourced fact
@@ -206,6 +209,11 @@ const docs: Docs = {
    endpoint on 2026-08-21. Only posts owned by @shortiieraw. The wedding post
    ranked second and is pulled at James's request — personal, not a promo asset. */
 const feed: FeedPost[] = [
+  // Her Fire promo, and the post she names first. Instagram refuses to embed
+  // this one — the embed URL answers "the link may be broken" on a white card
+  // while the reel itself is perfectly alive — so it carries its own frame.
+  { id: 'DCpBNoDRtgx', caption: '1 of 1 glowing like one of a kind', comments: 156,
+    kind: 'reel', embeddable: false, poster: 'assets/ig-1of1-glowing.jpg' },
   { id: 'CZr3NgclTAj', caption: "I'm going to miss it here", comments: 149 },
   { id: 'CFZ7NNApL3N', caption: 'Fire — in-studio performance', comments: 109 },
   { id: 'DWdDqX6jSiA', caption: 'Woke up to the sweetest messages', comments: 100 },
@@ -256,4 +264,20 @@ for (const [rel, body] of Object.entries(out.files)) {
   fs.writeFileSync(p, body);
 }
 fs.cpSync(path.join(SHARED, 'assets'), path.join(OUT, 'assets'), { recursive: true });
+
+/* Every local asset the page names must actually be in the output. A missing
+   one is invisible: the build is green, the HTML is valid, and the tile just
+   renders empty. Cost me a silent empty poster on 2026-08-22. */
+{
+  const html = fs.readFileSync(path.join(OUT, 'index.html'), 'utf8');
+  const refs = [...html.matchAll(/(?:src|href)="(assets\/[^"]+)"|url\('(assets\/[^']+)'\)/g)]
+    .map(m => m[1] ?? m[2]).filter(Boolean) as string[];
+  const missing = [...new Set(refs)].filter(r => !fs.existsSync(path.join(OUT, r)));
+  if (missing.length) {
+    console.error(`\n  ✕ ${missing.length} asset(s) referenced but not emitted:`);
+    for (const m of missing) console.error('    ' + m);
+    process.exit(1);
+  }
+  console.log(`  ${new Set(refs).size} local assets referenced, all present`);
+}
 console.log(`\n  ${Object.keys(out.files).length} files → ${OUT}`);

@@ -64,6 +64,14 @@ export class BuildRefused extends Error {
  * shipping a world that reads as a template — that refusal is the product.
  */
 export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boolean; shell?: CaseShell; webgl?: WebGLExtras; spatial?: SpatialExtras } = {}): BuiltSite {
+  // A feed post Instagram refuses to embed renders from its poster. Without
+  // one the tile is an empty box, and an empty box passes every check that
+  // does not look at the page — so refuse it here instead.
+  for (const f of [...(opts.spatial?.feed ?? []), ...(opts.webgl?.feed ?? [])]) {
+    if (f.embeddable === false && !f.poster) {
+      throw new Error(`feed post ${f.id} is marked not embeddable but carries no poster — it would render as an empty tile`);
+    }
+  }
   if (opts.webgl && opts.shell) return buildWebGL(w, c, l, opts.shell, opts.webgl, opts);
   // Topology decides the emitter, not a flag. A spatial world is an OBJECT
   // that opens; the others are documents. Same ledger, same rail, same

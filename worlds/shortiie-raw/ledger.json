@@ -272,12 +272,12 @@
     {
       "id": "instagram.followers",
       "kind": "text",
-      "value": "40K",
+      "value": "39.7K",
       "label": "INSTAGRAM FOLLOWERS",
       "format": "none",
       "sourceUrl": "https://www.instagram.com/shortiieraw/",
       "verifiedAt": "2026-08-22",
-      "note": "Read off the live profile and corroborated by Instagram's own embed header ('79 posts · 40K followers') on 2026-08-22. Instagram rounds this figure, so it is stored as the displayed text '40K' rather than a precise count — printing 40,000 would invent three digits Instagram never published."
+      "note": "Instagram's own embed header reports 39.7K on 2026-08-22; the profile page rounds the same figure to '40K'. Stored as the more precise of the two surfaces — rounding 39.7K up to 40K would overstate her by 300 people, and the engine does not round in the artist's favour."
     }
   ],
   "sealed": [
