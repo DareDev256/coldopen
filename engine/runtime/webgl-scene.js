@@ -156,28 +156,38 @@ const liningMat = new THREE.MeshStandardMaterial({ color: 0x14121A, metalness: 0
 const goldMat = new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1, roughness: 0.28, envMapIntensity: 1.4 });
 
 /* ------------------------------------------------------------------ */
-/* the case                                                            */
+/* YOU ARE INSIDE THE CASE                                             */
 /* ------------------------------------------------------------------ */
+/*
+ * The mistake worth naming: the first two passes built a suitcase you look AT.
+ * A diorama. Standing outside an object and pointing at it is not the same
+ * experience as being inside one, and the whole reason to use a case rather
+ * than a grid is that a case has an INSIDE.
+ *
+ * So the camera goes in. The room IS the packed compartment — ribbed aluminium
+ * lining on every wall, the open lid overhead, foam and straps underfoot — and
+ * her work is mounted on the walls around you. Scroll turns your head.
+ *
+ * The exterior case still exists: it is what you see before you cross, and the
+ * open animation flies you through the gap between its halves into the room.
+ */
+
+const ROOM_W = 7.2, ROOM_H = 4.6, ROOM_D = 7.2;
 const CASE_W = 2.35, CASE_H = 3.3, CASE_D = 0.92;
-const caseGroup = new THREE.Group();
-caseGroup.position.set(0, -0.1, 0);
-scene.add(caseGroup);
+
+/* ---------- the exterior: the case, closed, standing in her footage ---------- */
+const exterior = new THREE.Group();
+exterior.position.set(0, -0.1, 0);
+scene.add(exterior);
 
 function halfShell(sign) {
-  // hinged at the OUTER edge, so the two halves open outwards like a clamshell
   const pivot = new THREE.Group();
   pivot.position.set(sign * CASE_W / 2, 0, 0);
   const g = new THREE.Group();
   g.position.set(-sign * CASE_W / 4, 0, 0);
-
-  const body = new THREE.Mesh(new THREE.BoxGeometry(CASE_W / 2, CASE_H, CASE_D / 2), [
-    sign > 0 ? aluEdge : aluEdge, sign > 0 ? aluEdge : aluEdge,
-    aluEdge, aluEdge, alu, liningMat,
-  ]);
-  RIB.normal.repeat.set(1.15, 1); RIB.rough.repeat.set(1.15, 1);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(CASE_W / 2, CASE_H, CASE_D / 2),
+    [aluEdge, aluEdge, aluEdge, aluEdge, alu, liningMat]);
   g.add(body);
-
-  // corner caps
   for (const cy of [1, -1]) {
     const cap = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, CASE_D / 2 + 0.02), aluEdge);
     cap.position.set(sign * (CASE_W / 4 - 0.16), cy * (CASE_H / 2 - 0.16), 0);
@@ -187,9 +197,8 @@ function halfShell(sign) {
   return pivot;
 }
 const halfL = halfShell(-1), halfR = halfShell(1);
-caseGroup.add(halfL, halfR);
+exterior.add(halfL, halfR);
 
-// telescoping handle
 const handle = new THREE.Group();
 {
   const post = new THREE.CylinderGeometry(0.045, 0.045, 0.72, 12);
@@ -203,50 +212,124 @@ const handle = new THREE.Group();
   bar.position.set(0, CASE_H / 2 + 0.7, -CASE_D / 2 + 0.06);
   handle.add(bar);
 }
-caseGroup.add(handle);
-
-// castors
+exterior.add(handle);
 for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-  const w = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.09, 16), new THREE.MeshStandardMaterial({ color: 0x15151a, metalness: 0.5, roughness: 0.6 }));
+  const w = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.09, 16),
+    new THREE.MeshStandardMaterial({ color: 0x15151a, metalness: 0.5, roughness: 0.6 }));
   w.rotation.z = Math.PI / 2;
   w.position.set(sx * (CASE_W / 2 - 0.28), -CASE_H / 2 - 0.1, sz * (CASE_D / 4));
-  caseGroup.add(w);
+  exterior.add(w);
 }
-// latches
 for (const y of [0.72, -0.72]) {
   const l = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.16, 0.08), goldMat);
   l.position.set(0, y, CASE_D / 4 + 0.03);
-  caseGroup.add(l);
+  exterior.add(l);
 }
 
-/* ------------------------------------------------------------------ */
-/* WHAT IS PACKED INSIDE                                                */
-/* ------------------------------------------------------------------ */
-/* The contents ARE the site. A wall of screens floating in space was a
-   gallery with a suitcase parked in front of it; this is a case you open and
-   look into, which is the only reason to build an object at all. */
+/* ---------- the interior: the room you end up standing in ---------- */
+const room = new THREE.Group();
+scene.add(room);
 
+/* Lining on every surface. BackSide, because we are inside the box looking at
+   the inner faces — the one detail that separates a room from a cube. */
+/* The lining is FABRIC, not bare metal.
+   A real aluminium case is metal on the outside and lined on the inside; the
+   first pass put the ribbed shell material on the inner walls, which read as
+   white bars and reflected the cobalt ground back at the viewer as navy.
+   Woven texture is generated here rather than shipped. */
+function weave() {
+  const N = 256, c = document.createElement('canvas');
+  c.width = c.height = N;
+  const g = c.getContext('2d');
+  const img = g.createImageData(N, N);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const i = (y * N + x) * 4;
+    const w = (Math.sin(x * 0.9) + Math.sin(y * 0.9)) * 0.25;
+    const n = (Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
+    const v = 128 + w * 26 + n * 10;
+    img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = 255; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(14, 9);
+  return t;
+}
+const ribbedLining = new THREE.MeshStandardMaterial({
+  color: 0x211E2B, metalness: 0.06, roughness: 0.94,
+  normalMap: weave(), normalScale: new THREE.Vector2(0.55, 0.55),
+  side: THREE.BackSide,
+});
+const shellRoom = new THREE.Mesh(new THREE.BoxGeometry(ROOM_W, ROOM_H, ROOM_D), ribbedLining);
+room.add(shellRoom);
+
+/* Light inside the room. The scene's key and rim are aimed at the exterior
+   case out in the montage; once you are inside a closed metal box none of it
+   reaches you, and the lining renders as flat navy. */
+const inLight = new THREE.PointLight(0xfff4e2, 34, 24, 1.6);
+inLight.position.set(0, ROOM_H / 2 - 0.5, 0.4);
+room.add(inLight);
+const inWarm = new THREE.PointLight(new THREE.Color(PAL.accent), 9, 16, 2);
+inWarm.position.set(-1.6, -0.6, 1.8);
+room.add(inWarm);
+
+/* the foam floor */
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D),
+  new THREE.MeshStandardMaterial({ color: 0x121017, roughness: 0.95 }));
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -ROOM_H / 2 + 0.01;
+room.add(floor);
+
+/* Aluminium rails at every corner: the frame of the case, seen from inside.
+   Without them the room is a fabric box and the object stops being luggage. */
+{
+  const railMat = new THREE.MeshStandardMaterial({ color: 0xB4BBC4, metalness: 1, roughness: 0.26, envMapIntensity: 1.6 });
+  const vGeo = new THREE.BoxGeometry(0.09, ROOM_H, 0.09);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const m = new THREE.Mesh(vGeo, railMat);
+    m.position.set(sx * (ROOM_W / 2 - 0.05), 0, sz * (ROOM_D / 2 - 0.05));
+    room.add(m);
+  }
+  const hGeoX = new THREE.BoxGeometry(ROOM_W, 0.09, 0.09);
+  const hGeoZ = new THREE.BoxGeometry(0.09, 0.09, ROOM_D);
+  for (const sy of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const m = new THREE.Mesh(hGeoX, railMat);
+      m.position.set(0, sy * (ROOM_H / 2 - 0.05), sz * (ROOM_D / 2 - 0.05));
+      room.add(m);
+    }
+    for (const sx of [-1, 1]) {
+      const m = new THREE.Mesh(hGeoZ, railMat);
+      m.position.set(sx * (ROOM_W / 2 - 0.05), sy * (ROOM_H / 2 - 0.05), 0);
+      room.add(m);
+    }
+  }
+}
+
+/* the zip line running round the seam of the case, at eye height */
+{
+  const zipMat = new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1, roughness: 0.34 });
+  const zipGeo = new THREE.BoxGeometry(ROOM_W - 0.02, 0.07, 0.05);
+  for (const [rot, x, z] of [[0, 0, -ROOM_D / 2 + 0.04], [0, 0, ROOM_D / 2 - 0.04],
+                             [Math.PI / 2, -ROOM_W / 2 + 0.04, 0], [Math.PI / 2, ROOM_W / 2 - 0.04, 0]]) {
+    const m = new THREE.Mesh(zipGeo, zipMat);
+    m.rotation.y = rot; m.position.set(x, ROOM_H / 2 - 0.5, z);
+    room.add(m);
+  }
+}
+
+/* ---------- what is mounted on the walls ---------- */
+const items = [];
+const POL = CFG.polaroids || [];
+const VID = CFG.panels || [];
 const loader = new THREE.TextureLoader();
-const inside = new THREE.Group();
-inside.position.z = -CASE_D / 4 + 0.02;
-caseGroup.add(inside);
 
-/* the lining the contents sit against */
-const lining = new THREE.Mesh(
-  new THREE.PlaneGeometry(CASE_W - 0.12, CASE_H - 0.12),
-  new THREE.MeshStandardMaterial({ color: 0x15121B, roughness: 0.92, metalness: 0.04 })
-);
-inside.add(lining);
-
-/* A polaroid is drawn, not loaded: white card, photo inset, caption in the
-   margin. Shipping eight pre-composited frames would be eight more files and
-   would bake the caption into the image, where no translation can reach it. */
 function polaroidTexture(img, caption) {
   const W = 512, H = 620, c = document.createElement('canvas');
   c.width = W; c.height = H;
   const g = c.getContext('2d');
-  g.fillStyle = '#F4F2EC'; g.fillRect(0, 0, W, H);          // the card stock
-  g.fillStyle = '#0B0B0D'; g.fillRect(28, 28, W - 56, 440); // the photo well
+  g.fillStyle = '#F4F2EC'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#0B0B0D'; g.fillRect(28, 28, W - 56, 440);
   const iw = img.naturalWidth, ih = img.naturalHeight;
   const s2 = Math.max((W - 56) / iw, 440 / ih);
   g.drawImage(img, 28 + ((W - 56) - iw * s2) / 2, 28 + (440 - ih * s2) / 2, iw * s2, ih * s2);
@@ -260,81 +343,93 @@ function polaroidTexture(img, caption) {
   return t;
 }
 
-const items = [];        // everything clickable
-const POL = CFG.polaroids || [];
-const VID = CFG.panels || [];
+/* Place an object against the inside of a wall, facing the middle of the room. */
+function onWall(mesh, wall, u, v, tilt = 0) {
+  const inset = 0.06;
+  if (wall === 'back')  { mesh.position.set(u, v, -ROOM_D / 2 + inset); }
+  if (wall === 'front') { mesh.position.set(u, v,  ROOM_D / 2 - inset); mesh.rotation.y = Math.PI; }
+  if (wall === 'left')  { mesh.position.set(-ROOM_W / 2 + inset, v, u); mesh.rotation.y =  Math.PI / 2; }
+  if (wall === 'right') { mesh.position.set( ROOM_W / 2 - inset, v, u); mesh.rotation.y = -Math.PI / 2; }
+  mesh.rotation.z = tilt * Math.PI / 180;
+  room.add(mesh);
+}
 
-/* ---- polaroids, loose in the top of the case ---- */
-/* Loose in the top of the case, overlapping the way a handful of photographs
-   actually sits — a tidy grid would read as a contact sheet, not a pile. */
-const POL_LAYOUT = [
-  [-0.74,  1.14, -8], [-0.02,  1.24,  5], [ 0.72,  1.10, -5],
-  [-0.78,  0.52,  7], [-0.04,  0.60, -6], [ 0.76,  0.48,  9],
+/* the videos: screens set into the back and side lining */
+const VID_SPOTS = [
+  ['back', -1.85, 0.62], ['back', 0, 0.62], ['back', 1.85, 0.62],
+  ['left', -1.7, 0.5], ['left', 1.7, 0.5], ['right', 0, 0.5],
 ];
-POL.slice(0, POL_LAYOUT.length).forEach((p, i) => {
-  const [x, y, rot] = POL_LAYOUT[i];
-  const geo = new THREE.PlaneGeometry(0.6, 0.73);
-  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.86, metalness: 0.0 });
-  const m = new THREE.Mesh(geo, mat);
-  m.position.set(x, y, 0.012 + i * 0.004);
-  m.rotation.z = rot * Math.PI / 180;
-  inside.add(m);
-  const img = new Image();
-  img.onload = () => { mat.map = polaroidTexture(img, p.caption); mat.needsUpdate = true; };
-  img.src = p.src;
-  items.push({ mesh: m, kind: 'polaroid', data: p, home: m.position.clone(), rot: m.rotation.z });
-});
-
-/* ---- the music videos, seated under an elastic strap ---- */
-const strapMat = new THREE.MeshStandardMaterial({ color: 0x121216, roughness: 0.7 });
-const strap = new THREE.Mesh(new THREE.PlaneGeometry(CASE_W - 0.16, 0.055), strapMat);
-strap.position.set(0, -0.07, 0.09);
-inside.add(strap);
-
-const VID_LAYOUT = [[-0.7, -0.42], [0.0, -0.42], [0.7, -0.42], [-0.7, -0.98], [0.0, -0.98], [0.7, -0.98]];
-VID.slice(0, VID_LAYOUT.length).forEach((v, i) => {
-  const [x, y] = VID_LAYOUT[i];
-  const w = 0.6, h = w * 9 / 16;
+VID.slice(0, VID_SPOTS.length).forEach((v, i) => {
+  const [wall, u, vv] = VID_SPOTS[i];
+  const w = 1.55, h = w * 9 / 16;
   const poster = loader.load(v.poster);
   poster.colorSpace = THREE.SRGBColorSpace;
   const mat = new THREE.MeshBasicMaterial({ map: poster, toneMapped: false });
+  const bez = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.07, h + 0.07), new THREE.MeshBasicMaterial({ color: 0x05060A }));
+  onWall(bez, wall, u, vv);
+  bez.position.multiplyScalar(1.0);
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-  m.position.set(x, y, 0.02);
-  inside.add(m);
-  const bez = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.03, h + 0.03), new THREE.MeshBasicMaterial({ color: 0x05060A }));
-  bez.position.set(x, y, 0.014);
-  inside.add(bez);
-  items.push({ mesh: m, kind: 'video', data: v, mat, poster, video: null, live: false, home: m.position.clone(), rot: 0 });
+  onWall(m, wall, u, vv);
+  m.position.add(new THREE.Vector3(0, 0, 0).copy(m.position).normalize().multiplyScalar(-0.012));
+  items.push({ mesh: m, kind: 'video', data: v, mat, poster, video: null, live: false,
+               home: m.position.clone(), rot: m.rotation.z, quat: m.quaternion.clone() });
 });
 
-/* ---- the pouch: passports and documents, i.e. who she is ---- */
-const pouch = new THREE.Group();
-/* Bottom of the case, fully in frame. It first sat below the interior and was
-   clipped by the viewport — a clickable object nobody can see is not one. */
-pouch.position.set(0, -1.44, 0.05);
-inside.add(pouch);
+/* the polaroids: pinned around the videos */
+const POL_SPOTS = [
+  ['back', -2.5, -0.6, -7], ['back', -0.9, -0.72, 5], ['back', 0.85, -0.68, -5],
+  ['back', 2.45, -0.6, 8], ['left', 0.1, -0.62, -6], ['right', -1.9, -0.55, 6],
+];
+POL.slice(0, POL_SPOTS.length).forEach((p, i) => {
+  const [wall, u, v, tilt] = POL_SPOTS[i];
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.86 });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.87), mat);
+  onWall(m, wall, u, v, tilt);
+  const img = new Image();
+  img.onload = () => { mat.map = polaroidTexture(img, p.caption); mat.needsUpdate = true; };
+  img.src = p.src;
+  items.push({ mesh: m, kind: 'polaroid', data: p, home: m.position.clone(), rot: m.rotation.z, quat: m.quaternion.clone() });
+});
+
+/* the pouch: on the right wall, where a document pocket actually lives */
 {
-  const body = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 0.5),
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.72),
     new THREE.MeshStandardMaterial({ color: 0x1D1A24, roughness: 0.88 }));
-  pouch.add(body);
-  const zip = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 0.035),
+  onWall(body, 'right', 1.9, -0.5);
+  const zip = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.05),
     new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1, roughness: 0.3 }));
-  zip.position.set(0, 0.225, 0.005);
-  pouch.add(zip);
-  // a passport corner poking out of it
-  const pp = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.4),
+  onWall(zip, 'right', 1.9, -0.14);
+  const pp = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.66),
     new THREE.MeshStandardMaterial({ color: 0x7A1420, roughness: 0.8 }));
-  pp.position.set(0.4, 0.19, -0.004);
-  pp.rotation.z = 0.14;
-  pouch.add(pp);
-  items.push({ mesh: body, kind: 'pouch', data: { label: CFG.pouchLabel || 'DOCUMENTS' }, home: pouch.position.clone(), rot: 0 });
+  onWall(pp, 'right', 2.4, -0.24, 9);
+  items.push({ mesh: body, kind: 'pouch', data: { label: CFG.pouchLabel || 'DOCUMENTS' },
+               home: body.position.clone(), rot: body.rotation.z, quat: body.quaternion.clone() });
+}
+
+/* the wordmark, stencilled on the lining behind you — the way a case carries
+   its owner's name on the inside of the lid */
+{
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 256;
+  const g = c.getContext('2d');
+  g.clearRect(0, 0, 1024, 256);
+  g.fillStyle = 'rgba(255,255,255,0.16)';
+  g.font = '900 150px Anton, Impact, sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText((CFG.artist || '').toUpperCase(), 512, 128);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 1.1),
+    new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
+  onWall(m, 'front', 0, 0.4);
 }
 
 /* ---- video promotion, inside a hard budget ----
-   A poster is the resting state. A clip is promoted to a live texture only
-   when it is one of the nearest items and the frame budget allows, and it is
-   torn all the way down on demotion — pausing alone leaves the decoder alive
-   and the budget stops meaning anything. */
+   A poster is the resting state. A clip becomes a live texture only when it is
+   one of the screens you are actually facing and the frame budget allows, and
+   it is torn all the way down on demotion — pausing alone leaves the decoder
+   alive and the budget stops meaning anything. */
 function makeVideo(src) {
   const v = document.createElement('video');
   v.src = src; v.muted = true; v.loop = true; v.playsInline = true;
@@ -350,7 +445,7 @@ function promote(p) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.minFilter = THREE.LinearFilter;
   p.video.play().then(() => { p.mat.map = tex; p.mat.needsUpdate = true; })
-    .catch(() => { p.live = false; p.video = null; });   // autoplay refused: keep the poster
+    .catch(() => { p.live = false; p.video = null; });
 }
 function demote(p) {
   if (!p.live) return;
@@ -475,44 +570,45 @@ function tick() {
   openT += (openTarget - openT) * Math.min(1, dt * 2.6);
   const e = 1 - Math.pow(1 - openT, 3);
 
-  /* The halves swing wide and the camera comes in until the open case fills
-     the frame — you end up looking down into it, close enough to read a
-     polaroid caption. The case never flies past the camera and never leaves
-     the world; scroll back up and it closes again.
-
-     Framing is derived, not tuned by eye: solve the camera distance that makes
-     the interior occupy TARGET_FILL of the viewport height at the current fov,
-     so it frames the same on a phone and an ultrawide. */
-  halfL.rotation.y = e * 2.34;
-  halfR.rotation.y = -e * 2.34;
-  caseGroup.position.z = 0;
-  caseGroup.position.y = -0.1;
-  caseGroup.scale.setScalar(1);
+  /* ENTERING.
+     The halves swing wide and the camera flies through the gap between them
+     into the room. The exterior case shrinks away as you pass it, because at
+     the moment you are inside the packed compartment the outside of the case
+     is no longer a thing you can see — you are behind it. */
+  halfL.rotation.y = e * 2.5;
+  halfR.rotation.y = -e * 2.5;
   handle.visible = e < 0.4;
+  exterior.visible = e < 0.985;
+  exterior.scale.setScalar(1 + e * 5.2);      // it opens past you as you enter
+  exterior.position.z = e * 9.0;
 
-  const TARGET_FILL = 0.86;
-  const vfov = camera.fov * Math.PI / 180;
-  const needH = CASE_H / TARGET_FILL;
-  const closeZ = (needH / 2) / Math.tan(vfov / 2) + CASE_D;
-  camera.position.z = 13.2 - e * (13.2 - closeZ);
-  camera.position.y = 0.15 - e * 0.22;
+  /* Camera: from outside the case, through the gap, to standing in the room. */
+  camera.position.z = 13.2 - e * 13.2;
+  camera.position.y = 0.15 - e * 0.15;
 
-  /* Scroll leans the open case rather than spinning a carousel — you are
-     looking INTO one object, so the only motion that makes sense is the one
-     you would make with your own head. */
-  spin += (spinTarget - spin) * 0.075;
-  caseGroup.rotation.y = spin * 0.34 * openT;
-  caseGroup.rotation.x = 0.02 + spin * 0.06 * openT;
+  /* Scroll turns your head, exactly as it turns the room in a vault. */
+  spin += (spinTarget - spin) * 0.08;
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = spin * openT;
+  camera.rotation.x = -0.04 * openT;
+
+  /* The room only exists once you are through the threshold, so its lining
+     never shows through the closed shell. */
+  room.visible = e > 0.06;
 
   /* Only the video items nearest the camera decode. Ten 1080p streams stall a
      phone long before they run out of memory, and a wall that stutters is
      worse than one that holds still. */
   if (openT > 0.6) {
+    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
     const vids = items.filter((it) => it.kind === 'video');
     const ranked = vids.map((it) => {
       it.mesh.getWorldPosition(tmp);
-      return { it, d: tmp.distanceTo(camera.position) };
-    }).sort((a, b) => a.d - b.d);
+      const to = tmp.clone().sub(camera.position);
+      // rank by how far off-axis it is, not raw distance: in a small room every
+      // screen is close, and the one you are LOOKING at is the one to decode
+      return { it, d: to.normalize().dot(fwd) };
+    }).sort((a, b) => b.d - a.d);
     ranked.forEach((r, i) => { if (i < (degraded ? 1 : LIVE_BUDGET)) promote(r.it); else demote(r.it); });
   }
 
@@ -531,17 +627,22 @@ function tick() {
       } else cap.classList.remove('on');
     }
   }
+  /* Hover lifts an item off the lining toward the middle of the room; a
+     polaroid you pick up comes off the wall and turns to face you. Movement is
+     along each item's OWN normal, because they are on four different walls and
+     a shared axis would push half of them into the aluminium. */
   for (const it of items) {
     if (it.kind === 'pouch') continue;
     const lifted = it === held;
     const near = it === hovered && !held;
-    const tz = it.home.z + (lifted ? 0.9 : near ? 0.09 : 0);
-    const tsc = lifted ? 1.9 : near ? 1.06 : 1;
-    const trot = lifted ? 0 : it.rot;
-    it.mesh.position.z += (tz - it.mesh.position.z) * Math.min(1, dt * 7);
-    it.mesh.rotation.z += (trot - it.mesh.rotation.z) * Math.min(1, dt * 7);
-    const cs = it.mesh.scale.x + (tsc - it.mesh.scale.x) * Math.min(1, dt * 7);
-    it.mesh.scale.setScalar(cs);
+    const out = lifted ? 1.7 : near ? 0.12 : 0;
+    const n = tmp.set(0, 0, 1).applyQuaternion(it.quat);
+    const target = it.home.clone().addScaledVector(n, out);
+    it.mesh.position.lerp(target, Math.min(1, dt * 6));
+    const tsc = lifted ? 1.55 : near ? 1.05 : 1;
+    it.mesh.scale.setScalar(it.mesh.scale.x + (tsc - it.mesh.scale.x) * Math.min(1, dt * 6));
+    if (lifted) it.mesh.quaternion.slerp(camera.quaternion, Math.min(1, dt * 5));
+    else it.mesh.quaternion.slerp(it.quat, Math.min(1, dt * 5));
   }
 
   renderer.render(scene, camera);

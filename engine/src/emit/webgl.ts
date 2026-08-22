@@ -352,6 +352,7 @@ export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseSh
     palette: { ground: w.palette.ground, accent: w.palette.accent, payoff: w.palette.payoff },
     panels: x.panels,
     polaroids: x.polaroids ?? [],
+    artist: w.artist,
     pouchLabel: x.docs?.kicker ?? 'DOCUMENTS',
   };
 
