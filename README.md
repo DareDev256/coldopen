@@ -23,6 +23,10 @@ worlds**, and the design falls out of the name:
 | 100bandplan.com | **Mission File** | self-drawing blueprint, `DWG 100BP-A01`, redaction bars |
 | savv4x.com | **Problem Child** | red chromatic wordmark, ghost background type |
 | syreneffect.com | **SyrenEffect TV** | `NOW STREAMING`, a live video panel, `ENTER` |
+| **shortiieraw.com** | **Carry-On** | a ribbed cabin case that opens — paperwork in one lid, the back catalogue in the other, a passport that changes country with the language |
+
+The last one was built **by this engine**. Everything above it was built by hand,
+and the engine was derived from them.
 
 Nobody sat down and chose "a grid of cards". They chose *The Vault*, and the
 grid became a wall of hung work because that is what a vault contains.
@@ -42,10 +46,6 @@ explained. It beat *Premise* (too abstract), *Threshold* (too solemn), and
 
 ## The seven moves
 
-Every world the engine emits implements at least six of these. Fewer than six
-and the build is **refused**, because that is the point where a world starts
-reading as a template.
-
 1. **A named premise**, not a layout
 2. **A threshold ritual** — you cross something to get in
 3. **Sound as a first-class control**, not a mute icon
@@ -53,6 +53,18 @@ reading as a template.
 5. **Full-bleed motion as ground**, not decoration
 6. **ONE saturated hue**, tied to the artist
 7. **Live numbers as flex** — real counts, sourced
+
+The first two are mandatory. At least four of the remaining five must be
+present, or the build is **refused**.
+
+That threshold is not a guess. Reading the source of the five reference sites,
+only two carry HUD chrome and only two state a threshold; the two that both
+blind judges ranked highest average five to six moves, and the one both judges
+picked as machine-generated carries three. The engine is deliberately no
+stricter than the work it was derived from.
+
+**[docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** has the full extraction —
+every rule with the site that proves it and the site that breaks it.
 
 ---
 
@@ -100,6 +112,24 @@ nudging one channel, so the guard tests hue, saturation and lightness:
 #05090C  allowed
 #E23B2E  allowed
 ```
+
+### 3. ONE hue means one
+
+One reference site's config declared six reds — `primary`, `primary-dim`,
+`accent`, `blood`, `crimson`, `ember`. Another declared `--cyan: #3fd8ff`. One
+token, one name, one colour. Both blind judges picked the six-red site as the
+machine-generated one.
+
+`assertHueDiscipline()` refuses any colour within 25° of the accent at
+comparable saturation. The eye cannot separate `#FF4444` from `#FF1744`, so the
+extras buy nothing and cost the only thing that would have read: commitment.
+
+### 4. A template that still says REPLACE ME does not build
+
+The starter world shipped with placeholders in twelve slots and built clean,
+because no rule was looking. A green build on an unfilled template teaches
+exactly the wrong lesson about what this checks. It now refuses, and names
+every slot.
 
 Cream wins by default whenever the palette is not decided before layout — it
 flatters any photograph and clashes with nothing. That makes it a hedge, and
@@ -208,8 +238,31 @@ Requires Node 20+.
 ```bash
 git clone https://github.com/DareDev256/coldopen
 cd coldopen
-node --test --experimental-strip-types engine/test/*.test.ts   # 25 tests, no deps
+node --test --experimental-strip-types engine/test/*.test.ts   # 36 tests, no deps
+```
 
+### Build a world
+
+```bash
+cp -r worlds/_template worlds/your-artist
+node --experimental-strip-types worlds/your-artist/build.ts
+```
+
+That first run **fails on purpose**, and names every slot you have not filled:
+
+```
+COLD OPEN refused to build:
+  - 12 slot(s) still hold placeholder text: name, artist, domain,
+    threshold.label, threshold.reward, lexicon.enter, lexicon.catalogue, …
+    A world is not a world until it is named.
+```
+
+Work top to bottom through `build.ts`. Every refusal tells you what to change.
+When it goes green you have a deployable static site in `worlds/your-artist/site`.
+
+### Or run the studio, and let the artist choose
+
+```bash
 cd studio && npm install && npm run dev                        # http://localhost:4300
 ```
 
@@ -239,7 +292,10 @@ engine/src/
   release.ts    Host-pattern inference, recency, collision-free placement
   emit/         index.html · css/style.css · js/main.js · vercel.json · SOURCES
 studio/         The UI. Next.js. Six steps, no terminal required.
-worlds/         One directory per artist: their ledger and their build script.
+worlds/_template        Copy this to start. Refuses until you have filled it in.
+worlds/                 One directory per artist: their ledger and build script.
+docs/DESIGN-SYSTEM.md   The extraction, with the evidence for every rule.
+docs/GAUNTLET.md        The blind A/B method and both rounds of results.
 ```
 
 ---
