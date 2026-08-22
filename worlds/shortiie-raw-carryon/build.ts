@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Ledger } from '../../engine/src/ledger.ts';
 import { derive } from '../../engine/src/derive.ts';
-import { build, type CaseShell } from '../../engine/src/emit/index.ts';
+import { build, type CaseShell, type Docs, type FeedPost } from '../../engine/src/emit/index.ts';
 import type { SiteContent, Unit } from '../../engine/src/emit/html.ts';
 import type { PremiseDraft } from '../../engine/src/premise.ts';
 
@@ -174,7 +174,47 @@ const content: SiteContent = {
   },
 };
 
-const out = build(world as any, content, ledger, { shell });
+/* Her about, as papers rather than a bio block. Every field and quote resolves
+   through the ledger, so the passport is as sourced as the numbers are. */
+const docs: Docs = {
+  kicker: 'PASSPORT · DOCUMENTS',
+  title: 'Shortiie Raw',
+  fields: [
+    { label: 'Born', value: 'Lisbon, Portugal' },
+    { label: 'Raised', value: 'Toronto, Canada' },
+    { label: 'Records from', value: 'Luanda, Angola' },
+    { label: 'Raps in', value: 'EN · PT · ES' },
+    { label: 'Billed as', value: String(ledger.require('artist.name').value) },
+    { label: 'Date of birth', value: String(ledger.require('artist.born').value) },
+  ],
+  body: [
+    'Born in Lisbon. Landed in Toronto at six speaking no English. She raps in three languages now.',
+    'The comments under her videos are in Portuguese and flagged Angola. The streaming map says 43% Canada, 26% United States, and no Angola at all. Those are two different audiences reading the same artist.',
+    'Independent. No label, no team.',
+  ],
+  quotes: [
+    { text: String(ledger.require('quote.bullied').value), source: 'Flaunt Magazine', sourceUrl: String(ledger.require('quote.bullied').sourceUrl) },
+    { text: String(ledger.require('quote.culture').value), source: 'Flaunt Magazine', sourceUrl: String(ledger.require('quote.culture').sourceUrl) },
+    { text: String(ledger.require('quote.selfmade').value), source: 'Flaunt Magazine', sourceUrl: String(ledger.require('quote.selfmade').sourceUrl) },
+  ],
+};
+
+/* Her Instagram, ranked by comment count read from Instagram's own embed
+   endpoint on 2026-08-21. Only posts owned by @shortiieraw. The wedding post
+   ranked second and is pulled at James's request — personal, not a promo asset. */
+const feed: FeedPost[] = [
+  { id: 'CZr3NgclTAj', caption: "I'm going to miss it here", comments: 149 },
+  { id: 'CFZ7NNApL3N', caption: 'Fire — in-studio performance', comments: 109 },
+  { id: 'CqiijQ8ug_N', caption: '#photodump', comments: 75 },
+];
+
+const out = build(world as any, content, ledger, {
+  shell,
+  spatial: {
+    montage: { src: 'assets/montage.mp4', poster: 'assets/montage-poster.jpg' },
+    docs, feed, igHandle: 'shortiieraw',
+  },
+});
 console.log('── AUDIT ──');
 console.log(`  moves ${out.audit.moveCount}/7   ink ${out.audit.contrast.inkOnGround.toFixed(2)}:1   accent ${out.audit.contrast.accentOnGround.toFixed(2)}:1`);
 console.log(out.audit.ok ? '  ✓ clean' : out.audit.problems.map(p => '  ✕ ' + p).join('\n'));

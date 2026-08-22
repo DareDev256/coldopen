@@ -63,6 +63,8 @@ export function emitSpatialJS(w: World): string {
     if (tags) tags.classList.add('gone');
     if (tagline) { tagline.style.transition = 'opacity .4s'; tagline.style.opacity = '0'; }
     if (dial) dial.classList.add('shown');
+    var g = document.querySelector('#ground video');
+    if (g && !reduce) g.play().catch(function () {});
     try { if (audio && localStorage.getItem('co-sound') === '1') {
       audio.volume = 0; audio.play().then(function () { fade(audio, .5, 1200); setSound(true); }).catch(function () {});
     } } catch (e) {}
@@ -114,6 +116,28 @@ export function emitSpatialJS(w: World): string {
       else { audio.volume = 0; audio.play().then(function () { fade(audio, .5, 900); setSound(true); }).catch(function () {}); }
     });
   }
+
+  /* ---------- the paperwork ----------
+     Every readable surface is a panel you take out of the case: passport,
+     baggage docket, manifest, customs form, her feed. */
+  function openPanel(id) {
+    var el = document.getElementById('panel-' + id);
+    if (!el) return;
+    document.querySelectorAll('.panel').forEach(function (n) { n.classList.remove('open'); n.setAttribute('aria-hidden', 'true'); });
+    el.classList.add('open'); el.setAttribute('aria-hidden', 'false');
+    var f = el.querySelector('button, a, input'); if (f) f.focus();
+  }
+  function closePanels() {
+    document.querySelectorAll('.panel').forEach(function (n) { n.classList.remove('open'); n.setAttribute('aria-hidden', 'true'); });
+  }
+  document.querySelectorAll('[data-panel]').forEach(function (b) {
+    b.addEventListener('click', function (e) { e.stopPropagation(); openPanel(b.getAttribute('data-panel')); });
+  });
+  document.querySelectorAll('.panel').forEach(function (n) {
+    n.addEventListener('click', function (e) { if (e.target === n || e.target.dataset.close !== undefined) closePanels(); });
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanels(); });
+  window.__coldopenPanel = openPanel;
 
   /* ---------- reveals + count-up ---------- */
   var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {

@@ -1,6 +1,6 @@
 import { emitCSS } from './css.ts';
 import { emitSpatialCSS, type CaseShell } from './spatial.ts';
-import { emitSpatialHTML } from './spatial-html.ts';
+import { emitSpatialHTML, type SpatialExtras } from './spatial-html.ts';
 import { emitSpatialJS } from './spatial-js.ts';
 import { emitWebGLCSS, emitWebGLHTML, emitWebGLUIJS, type WebGLExtras } from './webgl.ts';
 import fs from 'node:fs';
@@ -63,14 +63,14 @@ export class BuildRefused extends Error {
  * Build the site. The audit runs BEFORE emission and refuses rather than
  * shipping a world that reads as a template — that refusal is the product.
  */
-export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boolean; shell?: CaseShell; webgl?: WebGLExtras } = {}): BuiltSite {
+export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boolean; shell?: CaseShell; webgl?: WebGLExtras; spatial?: SpatialExtras } = {}): BuiltSite {
   if (opts.webgl && opts.shell) return buildWebGL(w, c, l, opts.shell, opts.webgl, opts);
   // Topology decides the emitter, not a flag. A spatial world is an OBJECT
   // that opens; the others are documents. Same ledger, same rail, same
   // SOURCES table underneath either way.
   const spatial = !!opts.shell;
   const html = spatial
-    ? emitSpatialHTML(w, c, l, opts.shell!)
+    ? emitSpatialHTML(w, c, l, opts.shell!, opts.spatial ?? {})
     : emitHTML(w, c, l);                    // run first: it records ledger misses
   const audit = auditWorld(w, l);
   if (!audit.ok && !opts.force) throw new BuildRefused(audit);

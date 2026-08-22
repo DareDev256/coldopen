@@ -69,6 +69,21 @@ button{font:inherit}
 ::selection{background:var(--accent);color:${ground}}
 
 /* =========================================================
+   0 · HER FOOTAGE, AS THE GROUND
+   Aerials over the Luanda coast, the jetski, the quad on the beach. It plays
+   behind the case rather than on a panel, because a flat swatch behind an
+   object is a studio backdrop and this is meant to be where she is.
+   ========================================================= */
+#ground{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+#ground video,#ground img{ width:100%; height:100%; object-fit:cover;
+  filter:saturate(.6) contrast(1.02) brightness(.46); }
+#ground::after{ content:""; position:absolute; inset:0;
+  background:radial-gradient(115% 85% at 50% 42%, ${alpha(ground, 0.5)} 0%, ${alpha(ground, 0.85)} 60%, ${alpha(ground, 0.96)} 100%),
+             linear-gradient(180deg, ${alpha(ground, 0.68)}, transparent 24%, transparent 66%, ${alpha(ground, 0.95)}); }
+/* once the case is open the footage steps back so the contents are the picture */
+body.is-open #ground video{ filter:saturate(.42) contrast(1) brightness(.26) blur(3px); transition:filter 1.2s ease; }
+
+/* =========================================================
    1 · THE STAND — where the case waits
    ========================================================= */
 #stage{ position:relative; min-height:100svh; display:flex; flex-direction:column; align-items:center;
@@ -250,12 +265,18 @@ button{font:inherit}
   font-family:var(--f-mono); font-size:clamp(.42rem,1vw,.54rem); letter-spacing:.22em; text-transform:uppercase;
   color:${alpha('#ffffff', 0.92)}; background:linear-gradient(transparent, ${alpha('#000000', 0.88)}) }
 /* the zip mesh pocket */
-.pocket{ position:relative; flex:0 0 34%; border-radius:3px; overflow:hidden; min-height:0;
+.pocket{ position:relative; flex:0 0 26%; cursor:pointer; border:0; padding:0; width:100%; display:block;
+  text-align:left; transition:transform .2s, box-shadow .2s; border-radius:3px; overflow:hidden; min-height:0; cursor:pointer;
+  border:0; padding:0; width:100%; display:block; text-align:left;
+  transition:box-shadow .25s, transform .25s;
   background:${alpha('#ffffff', 0.05)};
   box-shadow:inset 0 0 0 1px ${alpha('#ffffff', 0.14)} }
+.pocket:hover,.pocket:focus-visible{ outline:none; transform:translateY(-2px);
+  box-shadow:inset 0 0 0 1px ${alpha(accent, 0.7)}, 0 6px 14px ${alpha('#000000', 0.5)} }
 .pocket::before{ content:""; position:absolute; inset:0;
   background:repeating-linear-gradient(45deg, ${alpha('#ffffff', 0.12)} 0 1px, transparent 1px 6px),
              repeating-linear-gradient(-45deg, ${alpha('#ffffff', 0.12)} 0 1px, transparent 1px 6px) }
+.pocket:hover,.pocket:focus-visible{ outline:none; transform:translateY(-2px) }
 .zip{ position:absolute; top:0; left:0; right:0; height:7px; z-index:2;
   background:repeating-linear-gradient(90deg, ${alpha(payoff, 0.85)} 0 2px, ${alpha('#000000', 0.5)} 2px 4px) }
 .pocket-t{ position:absolute; inset:auto 0 0 0; z-index:3; padding:.5rem .55rem;
@@ -324,6 +345,101 @@ p + p{ margin-top:1rem }
   color:${alpha('#ffffff', 0.68)}; margin-top:.22rem; text-transform:uppercase }
 .slot-n{ position:absolute; top:.42rem; left:.48rem; z-index:2; font-family:var(--f-mono); font-size:.48rem;
   letter-spacing:.14em; color:${alpha(accent, 0.92)} }
+
+/* =========================================================
+   5b · THE PAPERWORK, INSIDE THE CASE
+   What used to be four sections under the page is four objects in the lid:
+   a baggage docket, a manifest, a customs form and her feed. Plus the pouch,
+   which holds the passport. If everything she is fits in this case, a
+   scrolling document underneath it contradicts the premise.
+   ========================================================= */
+.docs{ display:grid; grid-template-columns:1fr 1fr; gap:.34rem; margin-top:.5rem; }
+.dtag{ position:relative; display:block; width:100%; text-align:left; cursor:pointer; border:0;
+  padding:.5rem .55rem .45rem; border-radius:2px; background:linear-gradient(160deg,#F2EEE2,#DCD6C4);
+  color:#14131A; border-top:3px solid var(--accent);
+  box-shadow:0 3px 9px ${alpha('#000000', 0.5)}; transition:transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s; }
+.dtag:hover,.dtag:focus-visible{ transform:translateY(-3px) rotate(-.8deg);
+  box-shadow:0 9px 18px ${alpha('#000000', 0.6)}; outline:none; }
+.dtag b{ display:block; font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
+  font-size:clamp(.54rem,1.15vw,.68rem); line-height:1.02; letter-spacing:-.01em; }
+.dtag i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:.4rem;
+  letter-spacing:.16em; text-transform:uppercase; color:#6A6252; margin-top:.2rem; }
+@media (max-width:760px){ .docs{ grid-template-columns:1fr } }
+
+.panel{ position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center;
+  padding:var(--gut); background:${alpha('#04050A', 0.88)}; backdrop-filter:blur(10px);
+  opacity:0; visibility:hidden; pointer-events:none; transition:opacity .3s ease, visibility .3s; }
+.panel.open{ opacity:1; visibility:visible; pointer-events:auto; }
+.doc{ position:relative; width:min(100%,760px); max-height:86svh; overflow:auto;
+  background:linear-gradient(168deg,#F6F3EA,#E6E1D4); color:#14131A; border-radius:3px;
+  box-shadow:0 30px 80px ${alpha('#000000', 0.6)}; padding:clamp(1.4rem,4vw,2.6rem); }
+.doc--wide{ width:min(100%,1080px) }
+.doc::before{ content:""; position:absolute; inset:10px; border:1px solid ${alpha('#14131A', 0.22)}; pointer-events:none }
+.doc-h{ font-family:var(--f-mono); font-size:.54rem; letter-spacing:.3em; text-transform:uppercase; color:#6A6252;
+  display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.1rem }
+.doc h3{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase; letter-spacing:-.02em; line-height:.92;
+  font-size:clamp(1.6rem,5vw,2.8rem); margin-bottom:1rem; color:#14131A }
+.doc p{ color:#2A2733; max-width:58ch; font-size:clamp(.94rem,1.5vw,1.02rem); line-height:1.72 }
+.doc p + p{ margin-top:.8rem }
+.doc-fields{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+  background:${alpha('#14131A', 0.18)}; border:1px solid ${alpha('#14131A', 0.18)}; margin:1.4rem 0 }
+.doc-f{ background:#F2EFE6; padding:.75rem .85rem }
+.doc-f b{ display:block; font-family:var(--f-disp); font-weight:900; font-size:1rem; color:#14131A }
+.doc-f span{ display:block; font-family:var(--f-mono); font-size:.48rem; letter-spacing:.2em; text-transform:uppercase;
+  color:#6A6252; margin-top:.28rem }
+.doc-q{ border-left:3px solid #B4181F; padding:.2rem 0 .2rem 1rem; margin:1.2rem 0; font-style:italic; color:#2A2733 }
+.doc-q cite{ display:block; font-style:normal; font-family:var(--f-mono); font-size:.48rem; letter-spacing:.2em;
+  text-transform:uppercase; color:#6A6252; margin-top:.45rem }
+.doc-q cite a{ color:#B4181F }
+.doc-x{ position:absolute; top:.7rem; right:.8rem; z-index:2; background:none; border:0; cursor:pointer;
+  font-family:var(--f-mono); font-size:.58rem; letter-spacing:.24em; color:#6A6252; padding:.4rem }
+.doc-x:hover{ color:#B4181F }
+.doc .figures{ display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:1px;
+  background:${alpha('#14131A', 0.18)}; border:1px solid ${alpha('#14131A', 0.18)}; margin:1.3rem 0 }
+.doc .fig{ background:#F2EFE6; padding:.8rem .85rem; position:relative; min-height:0;
+  display:flex; flex-direction:column; justify-content:flex-end }
+.doc .fig b{ display:block; font-family:var(--f-disp); font-weight:900; font-size:clamp(1.25rem,3vw,1.85rem);
+  line-height:1; letter-spacing:-.02em; color:#14131A; font-variant-numeric:tabular-nums; overflow-wrap:anywhere }
+.doc .fig .fl{ display:block; font-family:var(--f-mono); font-size:.46rem; letter-spacing:.2em; text-transform:uppercase;
+  color:#6A6252; margin-top:.38rem }
+.doc .fig .src{ position:absolute; top:.45rem; right:.55rem; font-family:var(--f-mono); font-size:.42rem;
+  letter-spacing:.12em; color:#8A8270; text-decoration:none; border-bottom:1px dotted #B5AC98 }
+.doc .fig .src:hover{ color:#B4181F }
+.doc .fig.sealed b{ display:flex; align-items:center; height:clamp(1.25rem,3vw,1.85rem) }
+.doc .fig.sealed .bar{ display:block; width:min(100%,8ch); height:.6em;
+  background:repeating-linear-gradient(90deg, ${alpha('#14131A', 0.42)} 0 .8em, transparent .8em .95em) }
+.doc .fig.sealed .fl{ color:#B4181F }
+.doc table{ width:100%; border-collapse:collapse; font-family:var(--f-mono); font-size:.6rem; margin-top:1rem }
+.doc th{ text-align:left; letter-spacing:.2em; text-transform:uppercase; color:#6A6252; font-size:.46rem;
+  padding:.5rem .55rem; border-bottom:1px solid ${alpha('#14131A', 0.3)}; font-weight:700 }
+.doc td{ padding:.5rem .55rem; border-bottom:1px solid ${alpha('#14131A', 0.14)}; color:#2A2733; vertical-align:top }
+.doc td a{ color:#B4181F; text-decoration:none; border-bottom:1px dotted rgba(180,24,31,.4); word-break:break-all }
+.doc .wrap{ overflow-x:auto }
+.doc form{ display:grid; gap:.7rem; margin-top:1.2rem }
+.doc label{ font-family:var(--f-mono); font-size:.48rem; letter-spacing:.22em; text-transform:uppercase;
+  color:#6A6252; display:block; margin-bottom:.28rem }
+.doc input,.doc textarea,.doc select{ width:100%; background:#FBF9F3; border:1px solid ${alpha('#14131A', 0.3)};
+  color:#14131A; padding:.68rem .78rem; font-family:var(--f-mono); font-size:.78rem }
+.doc input:focus,.doc textarea:focus,.doc select:focus{ outline:none; border-color:#B4181F }
+.doc textarea{ min-height:5.5rem; resize:vertical }
+.doc form button{ font-family:var(--f-mono); font-size:.58rem; letter-spacing:.28em; text-transform:uppercase;
+  font-weight:700; background:#14131A; color:#F4F2EC; border:0; padding:.9rem 1.25rem; cursor:pointer }
+.doc form button:hover{ background:#B4181F }
+.doc .alt{ margin-top:.85rem; font-family:var(--f-mono); font-size:.52rem; letter-spacing:.14em; color:#6A6252 }
+.doc .alt a{ color:#B4181F }
+.doc .links{ display:flex; flex-wrap:wrap; gap:.35rem; margin-top:1.3rem }
+.doc .links a{ font-family:var(--f-mono); font-size:.5rem; letter-spacing:.2em; text-transform:uppercase;
+  text-decoration:none; border:1px solid ${alpha('#14131A', 0.3)}; padding:.5rem .75rem; color:#2A2733 }
+.doc .links a:hover{ border-color:#B4181F; color:#B4181F }
+.feed{ display:grid; gap:.9rem; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); margin-top:1.3rem }
+.feed-i{ margin:0; background:#FBF9F3; border:1px solid ${alpha('#14131A', 0.2)} }
+.feed-i iframe{ width:100%; height:500px; border:0; display:block; background:#fff }
+.feed-i figcaption{ font-family:var(--f-mono); font-size:.5rem; letter-spacing:.14em; text-transform:uppercase;
+  color:#6A6252; padding:.55rem .65rem; border-top:1px solid ${alpha('#14131A', 0.16)} }
+.feed-i figcaption b{ color:#14131A; font-size:.68rem }
+.feed-i figcaption a{ color:#B4181F; text-decoration:none }
+.form-msg{ font-family:var(--f-mono); font-size:.56rem; letter-spacing:.12em; margin-top:.6rem; min-height:1.1em; color:#6A6252 }
+.form-msg.ok{ color:#1B7A3E } .form-msg.err{ color:#B4181F }
 
 /* =========================================================
    6 · CHROME

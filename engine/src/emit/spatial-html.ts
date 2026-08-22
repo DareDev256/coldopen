@@ -2,6 +2,7 @@ import type { World } from '../world.ts';
 import { Ledger, renderValue } from '../ledger.ts';
 import type { SiteContent } from './html.ts';
 import type { CaseShell } from './spatial.ts';
+import type { Docs, FeedPost } from './webgl.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -28,7 +29,14 @@ const LANG_NAME: Record<string, string> = {
   en: 'English', pt: 'Português', es: 'Español', fr: 'Français', ln: 'Lingála', kg: 'Kikongo',
 };
 
-export function emitSpatialHTML(w: World, c: SiteContent, l: Ledger, shell: CaseShell): string {
+export interface SpatialExtras {
+  readonly montage?: { src: string; poster: string };
+  readonly docs?: Docs;
+  readonly feed?: readonly FeedPost[];
+  readonly igHandle?: string;
+}
+
+export function emitSpatialHTML(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: SpatialExtras = {}): string {
   const families = [w.type.display.google, w.type.text.google, w.type.mono.google];
   const g = [...new Set(families)].join('&family=');
   const lex = w.lexicon;
@@ -58,6 +66,13 @@ ${c.jsonLd ? `<script type="application/ld+json">\n${JSON.stringify(c.jsonLd, nu
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+<!-- her own footage, as the ground the case stands in -->
+<div id="ground" aria-hidden="true">
+  ${x.montage
+    ? `<video src="${esc(x.montage.src)}" poster="${esc(x.montage.poster)}" muted loop playsinline autoplay preload="metadata"></video>`
+    : `<img src="${esc(c.ogImage)}" alt="" />`}
+</div>
 
 <div class="hud hud-tl mono">${esc(w.artist)}<i> // ${esc(w.name)}</i></div>
 <div class="hud hud-tr mono" id="hudReadout">${esc(w.chrome.docCode)}</div>
@@ -95,9 +110,17 @@ ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-
           <img src="${esc(shell.mirror)}" alt="${esc(w.artist)}" />
           <span class="mirror-cap mono" data-t="mirror">${esc(c.description)}</span>
         </div>
-        <div class="pocket">
+        <button class="pocket" type="button" data-panel="docs" aria-label="${esc(x.docs?.title ?? 'Documents')}">
           <span class="zip" aria-hidden="true"></span>
-          <span class="pocket-t mono">${esc(w.chrome.docCode)}<br />${esc(shell.engraving)}</span>
+          <span class="pocket-t mono">${esc(x.docs?.kicker ?? 'PASSPORT · DOCUMENTS')}<br />${esc(w.chrome.docCode)}</span>
+        </button>
+        <!-- the paperwork, in the lid. Everything that used to be a section
+             under the page is now something you take out of the case. -->
+        <div class="docs">
+          <button class="dtag" type="button" data-panel="figures"><b data-t="lex.proof">${esc(lex.proof)}</b><i>baggage · weighed</i></button>
+          <button class="dtag" type="button" data-panel="manifest"><b data-t="lex.index">${esc(lex.index)}</b><i>declared contents</i></button>
+          <button class="dtag" type="button" data-panel="contact"><b data-t="lex.contact">${esc(lex.contact)}</b><i>declaration</i></button>
+${(x.feed?.length ?? 0) > 0 ? `          <button class="dtag" type="button" data-panel="feed"><b>The Feed</b><i>@${esc(x.igHandle ?? '')}</i></button>` : ''}
         </div>
       </div>
       <div class="compartment">
@@ -151,70 +174,93 @@ ${regs.map(r => `    <button class="tag" data-reg="${esc(r.code)}" aria-label="$
   <p class="hint mono" id="hint">${esc(w.threshold.reward)} ↓</p>
 </div>
 
-<main>
-  <section id="proof" class="reveal">
-    <p class="slug" data-t="lex.proof">${esc(lex.proof)}</p>
-    <h2>${esc(w.name)}</h2>
+<!-- ============================================================
+     THE PAPERWORK. One shell, different paper.
+     ============================================================ -->
+<div id="panel-docs" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(x.docs?.title ?? 'Documents')}">
+  <div class="doc">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>${esc(x.docs?.kicker ?? 'PASSPORT')}</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3>${esc(x.docs?.title ?? w.artist)}</h3>
+    <div class="doc-fields">
+${(x.docs?.fields ?? []).map(f => `      <div class="doc-f"><b>${esc(f.value)}</b><span>${esc(f.label)}</span></div>`).join('\n')}
+    </div>
+${(x.docs?.body ?? []).map(p => `    <p>${esc(p)}</p>`).join('\n')}
+${(x.docs?.quotes ?? []).map(q => `    <blockquote class="doc-q">${esc(q.text)}<cite><a href="${esc(q.sourceUrl)}" target="_blank" rel="noopener">${esc(q.source)} ↗</a></cite></blockquote>`).join('\n')}
+  </div>
+</div>
+
+<div id="panel-figures" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(lex.proof)}">
+  <div class="doc">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>BAGGAGE · WEIGHED</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3 data-t="lex.proof">${esc(lex.proof)}</h3>
     <div data-t="story">${c.story.map(p => `<p>${esc(p)}</p>`).join('\n      ')}</div>
     <div class="figures">
 ${c.figures.map(id => figure(l, id)).filter(Boolean).join('\n')}
     </div>
-  </section>
+  </div>
+</div>
 
-  <section id="catalogue" class="reveal">
-    <p class="slug" data-t="lex.catalogue">${esc(lex.catalogue)}</p>
-    <h2>${c.units.length} ${esc(lex.unit)}${c.units.length === 1 ? '' : 'S'}</h2>
-${shell.trays.map(t => `    <div class="cube">
-      <p class="cube-lab">${esc(t.label)}</p>
-      <div class="slots" style="--n:${Math.max(1, Math.min(4, t.to - t.from))}">
-${c.units.slice(t.from, t.to).map((u, i) => `        <a class="slot" href="${esc(u.href)}" target="_blank" rel="noopener">
-          <img src="${esc(u.image)}" alt="${esc(u.title)}" loading="lazy" decoding="async" />
-          <span class="slot-n mono">${String(t.from + i + 1).padStart(2, '0')}</span>
-          <span class="slot-t"><b>${esc(u.title)}</b>${u.sub ? `<i>${esc(u.sub)}</i>` : ''}</span>
-        </a>`).join('\n')}
-      </div>
-    </div>`).join('\n')}
-  </section>
-
-  <section id="rail" class="reveal">
-    <p class="slug" data-t="lex.contact">${esc(lex.contact)}</p>
-    <div class="rail">
-      <h2 data-t="lex.contact">${esc(lex.contact)}</h2>
-      <form id="railForm" method="POST" action="${esc(c.rail.endpoint)}">
-${c.rail.fields.map(f => `        <div>
-          <label for="f-${esc(f.name)}">${esc(f.label)}</label>
-          ${f.type === 'textarea'
-            ? `<textarea id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}></textarea>`
-            : f.type === 'select'
-            ? `<select id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}>${(f.options ?? []).map(o => `<option>${esc(o)}</option>`).join('')}</select>`
-            : `<input id="f-${esc(f.name)}" type="${f.type}" name="${esc(f.name)}" ${f.required ? 'required' : ''} />`}
-        </div>`).join('\n')}
-        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
-        <button type="submit">${esc(c.rail.submitLabel)}</button>
-        <p class="form-msg mono" id="formMsg" role="status" aria-live="polite"></p>
-      </form>
-      ${c.rail.fallbackEmail ? `<p class="alt">or <a href="mailto:${esc(c.rail.fallbackEmail)}">${esc(c.rail.fallbackEmail)}</a></p>` : ''}
-      <div class="links">
-${c.links.map(k => `        <a href="${esc(k.href)}" target="_blank" rel="noopener">${esc(k.label)}</a>`).join('\n')}
-      </div>
-    </div>
-  </section>
-
-  <section id="sources" class="sources reveal">
-    <p class="slug" data-t="lex.index">${esc(lex.index)}</p>
-    <h2>${esc(lex.index)}</h2>
-    <p>Every figure on this page was read from a primary source on the date shown. Nothing here is estimated, rounded up, or inferred.</p>
+<div id="panel-manifest" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(lex.index)}">
+  <div class="doc doc--wide">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>MANIFEST · DECLARED CONTENTS</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3 data-t="lex.index">${esc(lex.index)}</h3>
+    <p>Every figure in this case was read from a primary source on the date shown. Nothing here is estimated, rounded up, or inferred.</p>
     <div class="wrap">
       <table>
         <thead><tr><th>Figure</th><th>Value</th><th>Read from</th><th>Verified</th></tr></thead>
         <tbody>
 ${l.toSourceTable().map(r => `          <tr><td>${esc(r.label)}</td><td>${esc(r.value)}</td><td><a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener">${esc(r.sourceUrl)}</a></td><td>${esc(r.verifiedAt)}</td></tr>`).join('\n')}
-${l.allSealed().map(s => `          <tr><td>${esc(s.label)}</td><td>████ withheld</td><td>${esc(s.reason)}</td><td>—</td></tr>`).join('\n')}
+${l.allSealed().map(sc => `          <tr><td>${esc(sc.label)}</td><td>████ withheld</td><td>${esc(sc.reason)}</td><td>—</td></tr>`).join('\n')}
         </tbody>
       </table>
     </div>
-  </section>
-</main>
+  </div>
+</div>
+
+<div id="panel-contact" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(lex.contact)}">
+  <div class="doc">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>DECLARATION</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3 data-t="lex.contact">${esc(lex.contact)}</h3>
+    <form id="railForm" method="POST" action="${esc(c.rail.endpoint)}">
+${c.rail.fields.map(f => `      <div>
+        <label for="f-${esc(f.name)}">${esc(f.label)}</label>
+        ${f.type === 'textarea'
+          ? `<textarea id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}></textarea>`
+          : f.type === 'select'
+          ? `<select id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}>${(f.options ?? []).map(o => `<option>${esc(o)}</option>`).join('')}</select>`
+          : `<input id="f-${esc(f.name)}" type="${f.type}" name="${esc(f.name)}" ${f.required ? 'required' : ''} />`}
+      </div>`).join('\n')}
+      <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
+      <button type="submit">${esc(c.rail.submitLabel)}</button>
+      <p class="form-msg mono" id="formMsg" role="status" aria-live="polite"></p>
+    </form>
+    ${c.rail.fallbackEmail ? `<p class="alt">or <a href="mailto:${esc(c.rail.fallbackEmail)}">${esc(c.rail.fallbackEmail)}</a></p>` : ''}
+    <div class="links">
+${c.links.map(k => `      <a href="${esc(k.href)}" target="_blank" rel="noopener">${esc(k.label)}</a>`).join('\n')}
+    </div>
+  </div>
+</div>
+
+${(x.feed?.length ?? 0) > 0 ? `<div id="panel-feed" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="The feed">
+  <div class="doc doc--wide">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>CARRIED ON · @${esc(x.igHandle ?? '')}</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3>The Feed</h3>
+    <p>Her most-talked-about posts. These are live Instagram embeds — the pictures are served by Instagram and stay attributed to her, so a post she takes down disappears from here the same day.</p>
+    <div class="feed">
+${(x.feed ?? []).map(f => `      <figure class="feed-i">
+        <iframe src="https://www.instagram.com/p/${esc(f.id)}/embed/captioned/" loading="lazy" scrolling="no" title="${esc(f.caption || f.id)}"></iframe>
+        <figcaption><b>${esc(f.comments)}</b> comments · <a href="https://www.instagram.com/p/${esc(f.id)}/" target="_blank" rel="noopener">open on Instagram ↗</a></figcaption>
+      </figure>`).join('\n')}
+    </div>
+    <p class="alt">More at <a href="https://www.instagram.com/${esc(x.igHandle ?? '')}/" target="_blank" rel="noopener">@${esc(x.igHandle ?? '')}</a></p>
+  </div>
+</div>` : ''}
+
 
 <footer>
   <span>© ${new Date().getFullYear()} ${esc(w.artist)}</span>
