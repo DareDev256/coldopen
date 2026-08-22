@@ -92,13 +92,18 @@ scene.environment = envMap;
 /* PMREM gives reflections; a directional gives FORM. Metal with only an
    environment reads flat from some angles, which is how a rendered case
    starts looking like a photograph of a sticker. */
-const key = new THREE.DirectionalLight(0xffffff, 3.4);
-key.position.set(-4, 6, 7);
+const key = new THREE.DirectionalLight(0xffffff, 5.2);
+key.position.set(-3, 5, 9);
 scene.add(key);
 const rim = new THREE.DirectionalLight(new THREE.Color(PAL.accent), 1.1);
 rim.position.set(5, -2, -4);
 scene.add(rim);
-scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+scene.add(new THREE.AmbientLight(0xffffff, 0.34));
+/* A fill that travels with the camera. Metal silhouetted against bright
+   footage goes black — it can only reflect what is in front of it, and the
+   montage is BEHIND it. */
+const fill = new THREE.DirectionalLight(0xffffff, 2.4);
+scene.add(fill, fill.target);
 
 /* ------------------------------------------------------------------ */
 /* the ribbed shell — a procedural map, so there is no texture to ship  */
@@ -110,7 +115,7 @@ function ribMaps() {
   const rc = document.createElement('canvas'); rc.width = W; rc.height = H;
   const rx = rc.getContext('2d');
 
-  const RIBS = 26, period = W / RIBS;
+  const RIBS = 13, period = W / RIBS;
   const nimg = nx.createImageData(W, H);
   const rimg = rx.createImageData(W, H);
   for (let x = 0; x < W; x++) {
@@ -127,7 +132,7 @@ function ribMaps() {
       nimg.data[i + 1] = 128 + Math.round(grain * 6);
       nimg.data[i + 2] = 255;
       nimg.data[i + 3] = 255;
-      const rough = 0.16 + Math.abs(slope) * 0.10 + Math.abs(grain) * 0.06;
+      const rough = 0.22 + Math.abs(slope) * 0.09 + Math.abs(grain) * 0.05;
       const rv = Math.round(rough * 255);
       rimg.data[i] = rv; rimg.data[i + 1] = rv; rimg.data[i + 2] = rv; rimg.data[i + 3] = 255;
     }
@@ -135,10 +140,17 @@ function ribMaps() {
   nx.putImageData(nimg, 0, 0);
   rx.putImageData(rimg, 0, 0);
 
+  /* Mipmaps and trilinear filtering are not optional here. A rib pitch that
+     lands near one screen pixel aliases into a barcode — the shell rendered as
+     hard black and white stripes rather than brushed metal, which is exactly
+     what a drawn CSS version does NOT do because it never resamples. */
   const mk = (c, srgb) => {
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    t.generateMipmaps = true;
+    t.minFilter = THREE.LinearMipmapLinearFilter;
+    t.magFilter = THREE.LinearFilter;
     if (srgb) t.colorSpace = THREE.SRGBColorSpace;
     return t;
   };
@@ -147,11 +159,11 @@ function ribMaps() {
 const RIB = ribMaps();
 
 const alu = new THREE.MeshStandardMaterial({
-  color: 0xC6CCD4, metalness: 1.0, roughness: 0.2,
-  normalMap: RIB.normal, normalScale: new THREE.Vector2(0.85, 0.85),
-  roughnessMap: RIB.rough, envMapIntensity: 2.0,
+  color: 0xE2E7ED, metalness: 1.0, roughness: 0.26,
+  normalMap: RIB.normal, normalScale: new THREE.Vector2(0.42, 0.42),
+  roughnessMap: RIB.rough, envMapIntensity: 3.4,
 });
-const aluEdge = new THREE.MeshStandardMaterial({ color: 0xA8AFB8, metalness: 1, roughness: 0.3, envMapIntensity: 1.9 });
+const aluEdge = new THREE.MeshStandardMaterial({ color: 0xCED4DB, metalness: 1, roughness: 0.26, envMapIntensity: 3.2 });
 const liningMat = new THREE.MeshStandardMaterial({ color: 0x14121A, metalness: 0.1, roughness: 0.82 });
 const goldMat = new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1, roughness: 0.28, envMapIntensity: 1.4 });
 
@@ -644,6 +656,9 @@ function tick() {
     if (lifted) it.mesh.quaternion.slerp(camera.quaternion, Math.min(1, dt * 5));
     else it.mesh.quaternion.slerp(it.quat, Math.min(1, dt * 5));
   }
+
+  fill.position.copy(camera.position);
+  fill.target.position.set(0, 0, 0);
 
   renderer.render(scene, camera);
 
