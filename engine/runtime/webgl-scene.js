@@ -184,7 +184,13 @@ const goldMat = new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1
  * open animation flies you through the gap between its halves into the room.
  */
 
-const ROOM_W = 7.2, ROOM_H = 4.6, ROOM_D = 7.2;
+/* A carry-on is wider than it is deep and not very tall. The first pass used a
+   7.2 cube, which renders as a warehouse — the proportion IS the object. */
+/* A carry-on is wider than it is deep and not very tall — but you have to fit
+   inside it. 4.6 deep put the camera two metres off the back wall and every
+   screen filled the frame. The RATIO is the object; the scale is so a person
+   can stand in it. */
+const ROOM_W = 10.4, ROOM_H = 5.4, ROOM_D = 7.0;
 const CASE_W = 2.35, CASE_H = 3.3, CASE_D = 0.92;
 
 /* ---------- the exterior: the case, closed, standing in her footage ---------- */
@@ -256,20 +262,22 @@ function weave() {
   const img = g.createImageData(N, N);
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const i = (y * N + x) * 4;
-    const w = (Math.sin(x * 0.9) + Math.sin(y * 0.9)) * 0.25;
+    /* A weave is a CROSS-hatch. Summing two sine waves at the same low
+       frequency made vertical banding, which read as bars on the wall. */
+    const w = Math.sin((x + y) * 2.1) * Math.sin((x - y) * 2.1) * 0.5;
     const n = (Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
-    const v = 128 + w * 26 + n * 10;
+    const v = 128 + w * 9 + n * 5;
     img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = 255; img.data[i + 3] = 255;
   }
   g.putImageData(img, 0, 0);
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(14, 9);
+  t.repeat.set(26, 14);
   return t;
 }
 const ribbedLining = new THREE.MeshStandardMaterial({
-  color: 0x211E2B, metalness: 0.06, roughness: 0.94,
-  normalMap: weave(), normalScale: new THREE.Vector2(0.55, 0.55),
+  color: 0x1E1D26, metalness: 0.05, roughness: 0.96,
+  normalMap: weave(), normalScale: new THREE.Vector2(0.3, 0.3),
   side: THREE.BackSide,
 });
 const shellRoom = new THREE.Mesh(new THREE.BoxGeometry(ROOM_W, ROOM_H, ROOM_D), ribbedLining);
@@ -278,10 +286,10 @@ room.add(shellRoom);
 /* Light inside the room. The scene's key and rim are aimed at the exterior
    case out in the montage; once you are inside a closed metal box none of it
    reaches you, and the lining renders as flat navy. */
-const inLight = new THREE.PointLight(0xfff4e2, 34, 24, 1.6);
-inLight.position.set(0, ROOM_H / 2 - 0.5, 0.4);
+const inLight = new THREE.PointLight(0xF2F5FA, 22, 20, 1.8);
+inLight.position.set(0, ROOM_H / 2 - 0.7, 0.6);
 room.add(inLight);
-const inWarm = new THREE.PointLight(new THREE.Color(PAL.accent), 9, 16, 2);
+const inWarm = new THREE.PointLight(new THREE.Color(PAL.accent), 3.4, 11, 2);
 inWarm.position.set(-1.6, -0.6, 1.8);
 room.add(inWarm);
 
@@ -295,24 +303,26 @@ room.add(floor);
 /* Aluminium rails at every corner: the frame of the case, seen from inside.
    Without them the room is a fabric box and the object stops being luggage. */
 {
-  const railMat = new THREE.MeshStandardMaterial({ color: 0xB4BBC4, metalness: 1, roughness: 0.26, envMapIntensity: 1.6 });
-  const vGeo = new THREE.BoxGeometry(0.09, ROOM_H, 0.09);
+  /* Trim, not scaffolding. At 0.09 across a 7-unit room these rendered as
+     structural beams and the interior read as a warehouse frame. */
+  const railMat = new THREE.MeshStandardMaterial({ color: 0x8E959E, metalness: 1, roughness: 0.34, envMapIntensity: 1.1 });
+  const vGeo = new THREE.BoxGeometry(0.035, ROOM_H, 0.035);
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
     const m = new THREE.Mesh(vGeo, railMat);
-    m.position.set(sx * (ROOM_W / 2 - 0.05), 0, sz * (ROOM_D / 2 - 0.05));
+    m.position.set(sx * (ROOM_W / 2 - 0.02), 0, sz * (ROOM_D / 2 - 0.02));
     room.add(m);
   }
-  const hGeoX = new THREE.BoxGeometry(ROOM_W, 0.09, 0.09);
-  const hGeoZ = new THREE.BoxGeometry(0.09, 0.09, ROOM_D);
+  const hGeoX = new THREE.BoxGeometry(ROOM_W, 0.035, 0.035);
+  const hGeoZ = new THREE.BoxGeometry(0.035, 0.035, ROOM_D);
   for (const sy of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const m = new THREE.Mesh(hGeoX, railMat);
-      m.position.set(0, sy * (ROOM_H / 2 - 0.05), sz * (ROOM_D / 2 - 0.05));
+      m.position.set(0, sy * (ROOM_H / 2 - 0.02), sz * (ROOM_D / 2 - 0.02));
       room.add(m);
     }
     for (const sx of [-1, 1]) {
       const m = new THREE.Mesh(hGeoZ, railMat);
-      m.position.set(sx * (ROOM_W / 2 - 0.05), sy * (ROOM_H / 2 - 0.05), 0);
+      m.position.set(sx * (ROOM_W / 2 - 0.02), sy * (ROOM_H / 2 - 0.02), 0);
       room.add(m);
     }
   }
@@ -321,11 +331,11 @@ room.add(floor);
 /* the zip line running round the seam of the case, at eye height */
 {
   const zipMat = new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1, roughness: 0.34 });
-  const zipGeo = new THREE.BoxGeometry(ROOM_W - 0.02, 0.07, 0.05);
+  const zipGeo = new THREE.BoxGeometry(ROOM_W - 0.02, 0.035, 0.03);
   for (const [rot, x, z] of [[0, 0, -ROOM_D / 2 + 0.04], [0, 0, ROOM_D / 2 - 0.04],
                              [Math.PI / 2, -ROOM_W / 2 + 0.04, 0], [Math.PI / 2, ROOM_W / 2 - 0.04, 0]]) {
     const m = new THREE.Mesh(zipGeo, zipMat);
-    m.rotation.y = rot; m.position.set(x, ROOM_H / 2 - 0.5, z);
+    m.rotation.y = rot; m.position.set(x, ROOM_H / 2 - 0.34, z);
     room.add(m);
   }
 }
@@ -368,8 +378,8 @@ function onWall(mesh, wall, u, v, tilt = 0) {
 
 /* the videos: screens set into the back and side lining */
 const VID_SPOTS = [
-  ['back', -1.85, 0.62], ['back', 0, 0.62], ['back', 1.85, 0.62],
-  ['left', -1.7, 0.5], ['left', 1.7, 0.5], ['right', 0, 0.5],
+  ['back', -2.9, 0.75], ['back', 0, 0.75], ['back', 2.9, 0.75],
+  ['left', -1.9, 0.62], ['left', 1.9, 0.62], ['right', -0.4, 0.62],
 ];
 VID.slice(0, VID_SPOTS.length).forEach((v, i) => {
   const [wall, u, vv] = VID_SPOTS[i];
@@ -389,8 +399,8 @@ VID.slice(0, VID_SPOTS.length).forEach((v, i) => {
 
 /* the polaroids: pinned around the videos */
 const POL_SPOTS = [
-  ['back', -2.5, -0.6, -7], ['back', -0.9, -0.72, 5], ['back', 0.85, -0.68, -5],
-  ['back', 2.45, -0.6, 8], ['left', 0.1, -0.62, -6], ['right', -1.9, -0.55, 6],
+  ['back', -3.9, -0.75, -7], ['back', -1.35, -0.9, 5], ['back', 1.3, -0.86, -5],
+  ['back', 3.85, -0.75, 8], ['left', 0.2, -0.8, -6], ['right', -2.4, -0.72, 6],
 ];
 POL.slice(0, POL_SPOTS.length).forEach((p, i) => {
   const [wall, u, v, tilt] = POL_SPOTS[i];
@@ -408,16 +418,57 @@ POL.slice(0, POL_SPOTS.length).forEach((p, i) => {
   const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.72),
     new THREE.MeshStandardMaterial({ color: 0x1D1A24, roughness: 0.88 }));
-  onWall(body, 'right', 1.9, -0.5);
+  onWall(body, 'right', 2.2, -0.7);
   const zip = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.05),
     new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1, roughness: 0.3 }));
-  onWall(zip, 'right', 1.9, -0.14);
+  onWall(zip, 'right', 2.2, -0.34);
   const pp = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.66),
     new THREE.MeshStandardMaterial({ color: 0x7A1420, roughness: 0.8 }));
-  onWall(pp, 'right', 2.4, -0.24, 9);
+  onWall(pp, 'right', 2.75, -0.44, 9);
   items.push({ mesh: body, kind: 'pouch', data: { label: CFG.pouchLabel || 'DOCUMENTS' },
                home: body.position.clone(), rot: body.rotation.z, quat: body.quaternion.clone() });
 }
+
+/* ---- the paperwork, hung where paperwork lives ----
+   Everything that used to be a section BELOW the page is now an object inside
+   the case: the figures on a baggage tag, the sources on a cargo manifest, the
+   booking rail on a customs declaration. If the premise is that all of her is
+   in this case, a scrolling document underneath it contradicts the premise. */
+function cardTexture(title, sub, accent) {
+  const W = 512, H = 320, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#EFEADC'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(20,19,26,0.3)'; g.lineWidth = 3;
+  g.strokeRect(14, 14, W - 28, H - 28);
+  g.fillStyle = accent; g.fillRect(14, 14, W - 28, 16);
+  g.fillStyle = '#14131A';
+  g.font = '900 54px Anton, Impact, sans-serif';
+  g.textAlign = 'center';
+  const words = title.split(' ');
+  if (words.length > 2) {
+    g.fillText(words.slice(0, 2).join(' ').toUpperCase(), W / 2, 150);
+    g.fillText(words.slice(2).join(' ').toUpperCase(), W / 2, 206);
+  } else g.fillText(title.toUpperCase(), W / 2, 178);
+  g.fillStyle = '#6A6252';
+  g.font = '600 22px ui-monospace, Menlo, monospace';
+  g.fillText(sub.toUpperCase(), W / 2, 262);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+
+(CFG.plaques || []).forEach((pl) => {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.72),
+    new THREE.MeshStandardMaterial({ map: cardTexture(pl.label, pl.sub, PAL.accent), roughness: 0.82 }));
+  onWall(m, pl.wall, pl.u, pl.v, pl.tilt || 0);
+  // the string it hangs by
+  const str = new THREE.Mesh(new THREE.PlaneGeometry(0.012, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0xC9C2AE, roughness: 0.9 }));
+  onWall(str, pl.wall, pl.u, pl.v + 0.5, pl.tilt || 0);
+  items.push({ mesh: m, kind: 'panel', data: pl, home: m.position.clone(), rot: m.rotation.z, quat: m.quaternion.clone() });
+});
 
 /* the wordmark, stencilled on the lining behind you — the way a case carries
    its owner's name on the inside of the lid */
@@ -491,29 +542,31 @@ function pick() {
   return hit ? items.find((i) => i.mesh === hit.object) : null;
 }
 
-const docs = document.getElementById('docs');
-const docsBody = document.getElementById('docs-body');
-function openDocs() {
-  if (!docs) return;
-  docs.classList.add('open');
-  docs.setAttribute('aria-hidden', 'false');
-  const first = docs.querySelector('button, a');
+/* Every readable surface is a panel you take out of the case. Same shell,
+   different paper — passport, baggage tag, manifest, customs form. */
+function openPanel(id) {
+  const el = document.getElementById('panel-' + id);
+  if (!el) return;
+  document.querySelectorAll('.panel').forEach((p) => { p.classList.remove('open'); p.setAttribute('aria-hidden', 'true'); });
+  el.classList.add('open');
+  el.setAttribute('aria-hidden', 'false');
+  const first = el.querySelector('button, a, input');
   if (first) first.focus();
 }
-function closeDocs() {
-  if (!docs) return;
-  docs.classList.remove('open');
-  docs.setAttribute('aria-hidden', 'true');
+function closePanels() {
+  document.querySelectorAll('.panel').forEach((p) => { p.classList.remove('open'); p.setAttribute('aria-hidden', 'true'); });
 }
-if (docs) {
-  docs.addEventListener('click', (e) => { if (e.target === docs || e.target.dataset.close !== undefined) closeDocs(); });
-  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDocs(); });
-}
+document.querySelectorAll('.panel').forEach((el) => {
+  el.addEventListener('click', (e) => { if (e.target === el || e.target.dataset.close !== undefined) closePanels(); });
+});
+addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanels(); });
+window.__coldopenPanel = openPanel;
 
 host.addEventListener('click', () => {
   const it = pick();
   if (!it) { if (held) held = null; return; }
-  if (it.kind === 'pouch') { openDocs(); return; }
+  if (it.kind === 'pouch') { openPanel('docs'); return; }
+  if (it.kind === 'panel') { openPanel(it.data.id); return; }
   if (it.kind === 'video') { window.open(it.data.href, '_blank', 'noopener'); return; }
   held = held === it ? null : it;      // a polaroid you picked up, put back
 });
@@ -595,7 +648,7 @@ function tick() {
   exterior.position.z = e * 9.0;
 
   /* Camera: from outside the case, through the gap, to standing in the room. */
-  camera.position.z = 13.2 - e * 13.2;
+  camera.position.z = 13.2 - e * (13.2 - 2.05);
   camera.position.y = 0.15 - e * 0.15;
 
   /* Scroll turns your head, exactly as it turns the room in a vault. */
@@ -633,6 +686,7 @@ function tick() {
     if (cap) {
       if (hit) {
         cap.textContent = hit.kind === 'pouch' ? (hit.data.label + ' — OPEN')
+          : hit.kind === 'panel' ? (hit.data.label + ' — OPEN')
           : hit.kind === 'video' ? (hit.data.title + ' — ' + (hit.data.sub || '') + '  ↗')
           : hit.data.caption;
         cap.classList.add('on');
@@ -644,7 +698,7 @@ function tick() {
      along each item's OWN normal, because they are on four different walls and
      a shared axis would push half of them into the aluminium. */
   for (const it of items) {
-    if (it.kind === 'pouch') continue;
+    if (it.kind === 'pouch' || it.kind === 'panel') continue;
     const lifted = it === held;
     const near = it === hovered && !held;
     const out = lifted ? 1.7 : near ? 0.12 : 0;
@@ -659,6 +713,7 @@ function tick() {
 
   fill.position.copy(camera.position);
   fill.target.position.set(0, 0, 0);
+  fill.intensity = 2.4 * (1 - openT);   // it lights the exterior shell, not the lining
 
   renderer.render(scene, camera);
 

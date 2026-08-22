@@ -68,7 +68,7 @@ a{color:inherit} button{font:inherit}
    length of the track, then releases into the document — no wheel hijacking,
    so a trackpad, a keyboard and a screen reader all behave normally and the
    scrollbar never lies about how long the page is. */
-#glscroll{ position:relative; height:340svh; }
+#glscroll{ position:relative; height:300svh; }
 #glroot{ position:sticky; top:0; height:100svh; width:100%; overflow:hidden; }
 #gl{ position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; }
 #gl-labels{ position:absolute; inset:0; z-index:3; pointer-events:none; }
@@ -133,13 +133,13 @@ body.is-open .hero-copy{ opacity:0; transform:translateY(-28px) }
 #pickcap.on{ opacity:1 }
 
 /* ---------- the pouch: passport and documents ---------- */
-#docs{ position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center;
+#docs, .panel{ position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center;
   padding:var(--gut); background:${alpha('#04050A', 0.86)}; backdrop-filter:blur(10px);
   /* visibility, not just opacity: an opacity-0 dialog still hands its children
      to the accessibility tree and can still paint stray boxes over the canvas */
   opacity:0; visibility:hidden; pointer-events:none; transition:opacity .35s ease, visibility .35s }
-#docs.open{ opacity:1; visibility:visible; pointer-events:auto }
-.doc{ position:relative; width:min(100%,720px); max-height:86svh; overflow:auto;
+#docs.open, .panel.open{ opacity:1; visibility:visible; pointer-events:auto }
+.doc{ position:relative; width:min(100%,760px); max-height:86svh; overflow:auto;
   background:linear-gradient(168deg,#F6F3EA,#E6E1D4); color:#14131A; border-radius:3px;
   box-shadow:0 30px 80px ${alpha('#000000', 0.6)}; padding:clamp(1.4rem,4vw,2.6rem) }
 /* a passport page, not a modal: the object you took out of the pouch */
@@ -163,6 +163,51 @@ body.is-open .hero-copy{ opacity:0; transform:translateY(-28px) }
 .doc-x{ position:absolute; top:.7rem; right:.8rem; z-index:2; background:none; border:0; cursor:pointer;
   font-family:var(--f-mono); font-size:.6rem; letter-spacing:.24em; color:#6A6252; padding:.4rem }
 .doc-x:hover{ color:#B4181F }
+
+/* the figures, as a weighed-baggage docket */
+.doc .figures{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1px;
+  background:rgba(20,19,26,.18); border:1px solid rgba(20,19,26,.18); margin:1.4rem 0 }
+.doc .fig{ background:#F2EFE6; padding:.85rem .9rem; position:relative; min-height:0;
+  display:flex; flex-direction:column; justify-content:flex-end }
+.doc .fig b{ display:block; font-family:var(--f-disp); font-weight:900; font-size:clamp(1.3rem,3vw,1.9rem);
+  line-height:1; letter-spacing:-.02em; color:#14131A; font-variant-numeric:tabular-nums; overflow-wrap:anywhere }
+.doc .fig .fl{ display:block; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.2em; text-transform:uppercase;
+  color:#6A6252; margin-top:.4rem }
+.doc .fig .src{ position:absolute; top:.5rem; right:.6rem; font-family:var(--f-mono); font-size:.44rem;
+  letter-spacing:.12em; color:#8A8270; text-decoration:none; border-bottom:1px dotted #B5AC98 }
+.doc .fig .src:hover{ color:#B4181F }
+.doc .fig.sealed b{ display:flex; align-items:center; height:clamp(1.3rem,3vw,1.9rem) }
+.doc .fig.sealed .bar{ display:block; width:min(100%,8ch); height:.6em;
+  background:repeating-linear-gradient(90deg, rgba(20,19,26,.42) 0 .8em, transparent .8em .95em) }
+.doc .fig.sealed .fl{ color:#B4181F }
+
+/* the manifest table */
+.doc table{ width:100%; border-collapse:collapse; font-family:var(--f-mono); font-size:.62rem; margin-top:1.1rem }
+.doc th{ text-align:left; letter-spacing:.2em; text-transform:uppercase; color:#6A6252; font-size:.5rem;
+  padding:.55rem .6rem; border-bottom:1px solid rgba(20,19,26,.3); font-weight:700 }
+.doc td{ padding:.55rem .6rem; border-bottom:1px solid rgba(20,19,26,.14); color:#2A2733; vertical-align:top }
+.doc td a{ color:#B4181F; text-decoration:none; border-bottom:1px dotted rgba(180,24,31,.4); word-break:break-all }
+.doc .wrap{ overflow-x:auto }
+
+/* the customs declaration */
+.doc form{ display:grid; gap:.75rem; margin-top:1.3rem }
+.doc label{ font-family:var(--f-mono); font-size:.5rem; letter-spacing:.22em; text-transform:uppercase;
+  color:#6A6252; display:block; margin-bottom:.3rem }
+.doc input,.doc textarea,.doc select{ width:100%; background:#FBF9F3; border:1px solid rgba(20,19,26,.3);
+  color:#14131A; padding:.7rem .8rem; font-family:var(--f-mono); font-size:.8rem; border-radius:0 }
+.doc input:focus,.doc textarea:focus,.doc select:focus{ outline:none; border-color:#B4181F }
+.doc textarea{ min-height:6rem; resize:vertical }
+.doc form button{ font-family:var(--f-mono); font-size:.6rem; letter-spacing:.28em; text-transform:uppercase;
+  font-weight:700; background:#14131A; color:#F4F2EC; border:0; padding:.95rem 1.3rem; cursor:pointer }
+.doc form button:hover{ background:#B4181F }
+.doc .alt{ margin-top:.9rem; font-family:var(--f-mono); font-size:.55rem; letter-spacing:.14em; color:#6A6252 }
+.doc .alt a{ color:#B4181F }
+.doc .links{ display:flex; flex-wrap:wrap; gap:.4rem; margin-top:1.4rem }
+.doc .links a{ font-family:var(--f-mono); font-size:.52rem; letter-spacing:.2em; text-transform:uppercase;
+  text-decoration:none; border:1px solid rgba(20,19,26,.3); padding:.55rem .8rem; color:#2A2733 }
+.doc .links a:hover{ border-color:#B4181F; color:#B4181F }
+.form-msg{ font-family:var(--f-mono); font-size:.58rem; letter-spacing:.12em; margin-top:.7rem; min-height:1.1em; color:#6A6252 }
+.form-msg.ok{ color:#1B7A3E } .form-msg.err{ color:#B4181F }
 
 /* ---------- (retired) the info tags on the wall ---------- */
 .gl-tag{ position:absolute; top:0; left:0; opacity:0; text-decoration:none;
@@ -211,7 +256,7 @@ body.is-open .scrollhint{ opacity:1 }
 @keyframes eq{0%,100%{height:28%}50%{height:100%}}
 
 /* ---------- the site under the hero ---------- */
-main{ position:relative; z-index:10; background:var(--ground) }
+/* Nothing lives below the case. The only DOM under the hero is the credit. */
 section{ padding:clamp(3.5rem,9vh,7rem) var(--gut); position:relative }
 .slug{ font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.34em; text-transform:uppercase;
   color:var(--accent); font-weight:700; margin-bottom:1.1rem; display:flex; align-items:center; gap:.8rem }
@@ -291,7 +336,7 @@ footer{ padding:2.5rem var(--gut) 6.5rem; border-top:1px solid var(--line); font
 footer a{ color:var(--muted); text-decoration:none } footer a:hover{ color:var(--accent) }
 
 @media (max-width:760px){
-  #glscroll{ height:260svh }
+  #glscroll{ height:240svh }
   .hud-tr{ display:none }
   .gl-tag{ min-width:7.5rem; padding:.45rem .55rem }
   .gl-tag .t-title{ font-size:.74rem }
@@ -353,6 +398,11 @@ export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseSh
     panels: x.panels,
     polaroids: x.polaroids ?? [],
     artist: w.artist,
+    plaques: [
+      { id: 'figures',  label: lex.proof,   sub: 'baggage · weighed',  wall: 'left',  u: -0.4, v: 0.95, tilt: -3 },
+      { id: 'manifest', label: lex.index,   sub: 'declared contents',  wall: 'right', u: 1.0,  v: 0.95, tilt: 3 },
+      { id: 'contact',  label: lex.contact, sub: 'declaration',        wall: 'front', u: -1.9, v: -0.2, tilt: -2 },
+    ],
     pouchLabel: x.docs?.kicker ?? 'DOCUMENTS',
   };
 
@@ -428,80 +478,21 @@ ${regs.map(r => `      <button class="tag" data-reg="${esc(r.code)}" aria-label=
 </div>
 </div>
 
-<main>
-  <section id="proof" class="reveal">
-    <p class="slug" data-t="lex.proof">${esc(lex.proof)}</p>
-    <h2>${esc(w.name)}</h2>
-    <div data-t="story">${c.story.map(p => `<p>${esc(p)}</p>`).join('\n      ')}</div>
-    <div class="figures">
-${c.figures.map(id => figure(l, id)).filter(Boolean).join('\n')}
-    </div>
-  </section>
 
-  <section id="catalogue" class="reveal">
-    <p class="slug" data-t="lex.catalogue">${esc(lex.catalogue)}</p>
-    <h2>${c.units.length} ${esc(lex.unit)}${c.units.length === 1 ? '' : 'S'}</h2>
-${shell.trays.map(t => `    <div class="cube">
-      <p class="cube-lab">${esc(t.label)}</p>
-      <div class="slots" style="--n:${Math.max(1, Math.min(4, t.to - t.from))}">
-${c.units.slice(t.from, t.to).map((u, i) => `        <a class="slot" href="${esc(u.href)}" target="_blank" rel="noopener">
-          <img src="${esc(u.image)}" alt="${esc(u.title)}" loading="lazy" decoding="async" />
-          <span class="slot-n mono">${String(t.from + i + 1).padStart(2, '0')}</span>
-          <span class="slot-t"><b>${esc(u.title)}</b>${u.sub ? `<i>${esc(u.sub)}</i>` : ''}</span>
-        </a>`).join('\n')}
-      </div>
-    </div>`).join('\n')}
-  </section>
-
-  <section id="rail" class="reveal">
-    <p class="slug" data-t="lex.contact">${esc(lex.contact)}</p>
-    <div class="rail">
-      <h2 data-t="lex.contact">${esc(lex.contact)}</h2>
-      <form id="railForm" method="POST" action="${esc(c.rail.endpoint)}">
-${c.rail.fields.map(f => `        <div>
-          <label for="f-${esc(f.name)}">${esc(f.label)}</label>
-          ${f.type === 'textarea'
-            ? `<textarea id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}></textarea>`
-            : f.type === 'select'
-            ? `<select id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}>${(f.options ?? []).map(o => `<option>${esc(o)}</option>`).join('')}</select>`
-            : `<input id="f-${esc(f.name)}" type="${f.type}" name="${esc(f.name)}" ${f.required ? 'required' : ''} />`}
-        </div>`).join('\n')}
-        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
-        <button type="submit">${esc(c.rail.submitLabel)}</button>
-        <p class="form-msg mono" id="formMsg" role="status" aria-live="polite"></p>
-      </form>
-      ${c.rail.fallbackEmail ? `<p class="alt">or <a href="mailto:${esc(c.rail.fallbackEmail)}">${esc(c.rail.fallbackEmail)}</a></p>` : ''}
-      <div class="links">
-${c.links.map(k => `        <a href="${esc(k.href)}" target="_blank" rel="noopener">${esc(k.label)}</a>`).join('\n')}
-      </div>
-    </div>
-  </section>
-
-  <section id="sources" class="sources reveal">
-    <p class="slug" data-t="lex.index">${esc(lex.index)}</p>
-    <h2>${esc(lex.index)}</h2>
-    <p>Every figure on this page was read from a primary source on the date shown. Nothing here is estimated, rounded up, or inferred.</p>
-    <div class="wrap">
-      <table>
-        <thead><tr><th>Figure</th><th>Value</th><th>Read from</th><th>Verified</th></tr></thead>
-        <tbody>
-${l.toSourceTable().map(r => `          <tr><td>${esc(r.label)}</td><td>${esc(r.value)}</td><td><a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener">${esc(r.sourceUrl)}</a></td><td>${esc(r.verifiedAt)}</td></tr>`).join('\n')}
-${l.allSealed().map(s => `          <tr><td>${esc(s.label)}</td><td>████ withheld</td><td>${esc(s.reason)}</td><td>—</td></tr>`).join('\n')}
-        </tbody>
-      </table>
-    </div>
-  </section>
-</main>
-
-<footer>
+<footer id="foot">
   <span>© ${new Date().getFullYear()} ${esc(w.artist)}</span>
   <span class="mono">${esc(w.chrome.docCode)}</span>
   <span>Built by <a href="https://jamesdare.com" target="_blank" rel="noopener">DareDev256</a> · COLD OPEN</span>
 </footer>
 
-<!-- the pouch. Passport and documents: who she is, sourced like everything else. -->
-<div id="docs" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(x.docs?.title ?? 'Documents')}">
-  <div class="doc" id="docs-body">
+<!-- ============================================================
+     THE PAPERWORK. Everything that used to be a section under the
+     page is now something you take out of the case.
+     ============================================================ -->
+
+<!-- the pouch: passport and documents -->
+<div id="panel-docs" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(x.docs?.title ?? 'Documents')}">
+  <div class="doc">
     <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
     <div class="doc-h"><span>${esc(x.docs?.kicker ?? 'PASSPORT')}</span><span>${esc(w.chrome.docCode)}</span></div>
     <h3>${esc(x.docs?.title ?? w.artist)}</h3>
@@ -511,6 +502,64 @@ ${(x.docs?.fields ?? []).map(f => `      <div class="doc-f"><b>${esc(f.value)}</
     </div>
 ${(x.docs?.body ?? []).map(p => `    <p>${esc(p)}</p>`).join('\n')}
 ${(x.docs?.quotes ?? []).map(q => `    <blockquote class="doc-q">${esc(q.text)}<cite><a href="${esc(q.sourceUrl)}" target="_blank" rel="noopener">${esc(q.source)} ↗</a></cite></blockquote>`).join('\n')}
+  </div>
+</div>
+
+<!-- the baggage tag: what it weighs -->
+<div id="panel-figures" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(lex.proof)}">
+  <div class="doc">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>BAGGAGE · WEIGHED</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3 data-t="lex.proof">${esc(lex.proof)}</h3>
+    <div data-t="story">${c.story.map(p => `<p>${esc(p)}</p>`).join('\n      ')}</div>
+    <div class="figures">
+${c.figures.map(id => figure(l, id)).filter(Boolean).join('\n')}
+    </div>
+  </div>
+</div>
+
+<!-- the cargo manifest: every figure and where it came from -->
+<div id="panel-manifest" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(lex.index)}">
+  <div class="doc">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>MANIFEST · DECLARED CONTENTS</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3 data-t="lex.index">${esc(lex.index)}</h3>
+    <p>Every figure in this case was read from a primary source on the date shown. Nothing here is estimated, rounded up, or inferred.</p>
+    <div class="wrap">
+      <table>
+        <thead><tr><th>Figure</th><th>Value</th><th>Read from</th><th>Verified</th></tr></thead>
+        <tbody>
+${l.toSourceTable().map(r => `          <tr><td>${esc(r.label)}</td><td>${esc(r.value)}</td><td><a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener">${esc(r.sourceUrl)}</a></td><td>${esc(r.verifiedAt)}</td></tr>`).join('\n')}
+${l.allSealed().map(sc => `          <tr><td>${esc(sc.label)}</td><td>████ withheld</td><td>${esc(sc.reason)}</td><td>—</td></tr>`).join('\n')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- the customs declaration: the booking rail -->
+<div id="panel-contact" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(lex.contact)}">
+  <div class="doc">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>DECLARATION</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3 data-t="lex.contact">${esc(lex.contact)}</h3>
+    <form id="railForm" method="POST" action="${esc(c.rail.endpoint)}">
+${c.rail.fields.map(f => `      <div>
+        <label for="f-${esc(f.name)}">${esc(f.label)}</label>
+        ${f.type === 'textarea'
+          ? `<textarea id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}></textarea>`
+          : f.type === 'select'
+          ? `<select id="f-${esc(f.name)}" name="${esc(f.name)}" ${f.required ? 'required' : ''}>${(f.options ?? []).map(o => `<option>${esc(o)}</option>`).join('')}</select>`
+          : `<input id="f-${esc(f.name)}" type="${f.type}" name="${esc(f.name)}" ${f.required ? 'required' : ''} />`}
+      </div>`).join('\n')}
+      <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
+      <button type="submit">${esc(c.rail.submitLabel)}</button>
+      <p class="form-msg mono" id="formMsg" role="status" aria-live="polite"></p>
+    </form>
+    ${c.rail.fallbackEmail ? `<p class="alt">or <a href="mailto:${esc(c.rail.fallbackEmail)}">${esc(c.rail.fallbackEmail)}</a></p>` : ''}
+    <div class="links">
+${c.links.map(k => `      <a href="${esc(k.href)}" target="_blank" rel="noopener">${esc(k.label)}</a>`).join('\n')}
+    </div>
   </div>
 </div>
 
