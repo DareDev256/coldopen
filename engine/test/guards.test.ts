@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assertGroundAllowed, assertOneHue, liftAccentForGround, hsl, BannedGroundError, contrastRatio, auditWorld, type World } from '../src/world.ts';
+import { assertGroundAllowed, assertOneHue, assertHueDiscipline, liftAccentForGround, hsl, BannedGroundError, contrastRatio, auditWorld, type World } from '../src/world.ts';
 import { Ledger, UnsourcedFactError } from '../src/ledger.ts';
 import { assertDivergent, type PremiseDraft } from '../src/premise.ts';
 import { tagBalance, assertBalancePreserved, applyPatch, PatchRefused } from '../src/update.ts';
@@ -225,4 +225,70 @@ test('a saturated cobalt gets light ink, despite reporting HSL lightness > 0.5',
 
 test('a genuinely light ground still gets dark ink', () => {
   assert.ok(contrastRatio('#0C0D0F', '#FFFFFF') > contrastRatio('#F2F5F8', '#FFFFFF'));
+});
+
+/* ---------- hue discipline: the savv4x failure ---------- */
+
+test('refuses a palette of near-identical accents — six reds is not one hue', () => {
+  // the actual values from savv4x's tailwind config
+  assert.throws(
+    () => assertHueDiscipline('#FF1744', ['#8a0a1a', '#FF4444', '#DC143C', '#B22222', '#FF6B35']),
+    /same hue under different names/,
+  );
+});
+
+test('allows genuinely separate hues alongside the accent', () => {
+  assert.doesNotThrow(() => assertHueDiscipline('#3FD8FF', ['#FFDD33', '#E23B2E']));
+});
+
+test('a true neutral is not a clashing hue', () => {
+  assert.doesNotThrow(() => assertHueDiscipline('#FF1744', ['#8a8a8a', '#555555', '#e8e8e8']));
+});
+
+/* ---------- the move rule matches the reference sites ---------- */
+
+const baseWorld = (moves: any[]): World => ({
+  id: 'w', name: 'The Vault', logline: 'l', artist: 'A', domain: 'd',
+  palette: { ground: '#05090C', accent: '#3FD8FF', payoff: '#E6D9A8', ink: '#F2F5F8', muted: 'rgba(242,245,248,.6)' },
+  type: { display: { family: 'Archivo', weights: [900], google: 'Archivo' },
+          text: { family: 'Archivo', weights: [400], google: 'Archivo' },
+          mono: { family: 'Space Mono', weights: [400], google: 'Space+Mono' } },
+  lexicon: { enter: 'SCROLL TO ENTER', catalogue: 'THE DEPOSITS', story: 'THE RECORD', proof: 'RECEIPTS',
+             contact: 'ACCESS', latest: 'LATEST DEPOSIT', unit: 'deposit', index: 'SOURCES' },
+  threshold: { gesture: 'scroll', label: 'SCROLL TO ENTER', reward: 'THE ROOM OPENS', maxDwellMs: 7000 },
+  chrome: { docCode: 'KMV-2026-0017', stamps: ['SECURED'], readout: '000°' },
+  ground: { kind: 'video', src: 'v.mp4', treatment: ['grain'] },
+  sound: { src: 's.mp3', label: 'SOUND', startsMuted: false },
+  moves,
+});
+
+test('a named premise and a threshold are mandatory', () => {
+  const a = auditWorld(baseWorld(['threshold_ritual', 'hud_chrome', 'one_hue', 'live_numbers', 'video_ground', 'sound_control']));
+  assert.ok(a.problems.some(p => p.includes('not a world, it is a layout')));
+  const b = auditWorld(baseWorld(['named_premise', 'hud_chrome', 'one_hue', 'live_numbers', 'video_ground', 'sound_control']));
+  assert.ok(b.problems.some(p => p.includes('never crosses anything')));
+});
+
+test('three optional moves fails — that is the score of the site judges called generated', () => {
+  const a = auditWorld(baseWorld(['named_premise', 'threshold_ritual', 'one_hue', 'live_numbers', 'video_ground']));
+  assert.ok(a.problems.some(p => p.includes('Four is the floor')), a.problems.join(' | '));
+});
+
+test('four optional moves passes — the engine is no stricter than the work it came from', () => {
+  const a = auditWorld(baseWorld(['named_premise', 'threshold_ritual', 'one_hue', 'live_numbers', 'video_ground', 'sound_control']));
+  assert.equal(a.ok, true, a.problems.join(' | '));
+});
+
+/* ---------- an unfilled template must not build ---------- */
+
+test('refuses a world still holding placeholder text', () => {
+  const w = baseWorld(['named_premise', 'threshold_ritual', 'one_hue', 'live_numbers', 'video_ground', 'sound_control']);
+  const a = auditWorld({ ...w, name: 'REPLACE ME', lexicon: { ...w.lexicon, contact: 'REPLACE ME' } } as World);
+  assert.equal(a.ok, false);
+  assert.ok(a.problems.some(p => p.includes('placeholder text')), a.problems.join(' | '));
+  assert.ok(a.problems.some(p => p.includes('lexicon.contact')));
+});
+
+test('a filled world with the same shape passes', () => {
+  assert.equal(auditWorld(baseWorld(['named_premise','threshold_ritual','one_hue','live_numbers','video_ground','sound_control'])).ok, true);
 });

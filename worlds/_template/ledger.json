@@ -1,0 +1,36 @@
+{
+  "_read_me": "Every number and quote your site will print, and where you read it from. There is deliberately no way to render a value that is not in here. Delete these examples and put your artist's in.",
+  "facts": [
+    {
+      "id": "artist.name", "kind": "text", "format": "none",
+      "value": "REPLACE ME",
+      "label": "BILLED AS",
+      "sourceUrl": "https://open.spotify.com/artist/REPLACE",
+      "verifiedAt": "2026-01-01",
+      "note": "the DSP spelling, never your stylisation of it"
+    },
+    {
+      "id": "top.streams", "kind": "count",
+      "value": 123456,
+      "label": "BIGGEST RECORD · STREAMS",
+      "sourceUrl": "https://open.spotify.com/artist/REPLACE",
+      "verifiedAt": "2026-01-01",
+      "note": "the exact figure. Rounding it to 100K+ throws the flex away."
+    },
+    {
+      "id": "link.spotify", "kind": "link", "format": "none",
+      "value": "https://open.spotify.com/artist/REPLACE",
+      "label": "SPOTIFY",
+      "sourceUrl": "https://open.spotify.com/artist/REPLACE",
+      "verifiedAt": "2026-01-01"
+    }
+  ],
+  "sealed": [
+    {
+      "id": "instagram.followers",
+      "label": "INSTAGRAM FOLLOWERS",
+      "reason": "Instagram blocks automated reads; a count from a search-index snippet is not a primary source",
+      "unblockedBy": "the number read off the profile by a person, with the date"
+    }
+  ]
+}

@@ -304,6 +304,42 @@ export function assertAccentSaturated(hex: string): void {
   if (l < 0.10 || l > 0.96) throw new Error(`COLD OPEN refused accent "${hex}": lightness ${(l * 100).toFixed(0)}% is unusable against a ground.`);
 }
 
+/**
+ * HUE DISCIPLINE.
+ *
+ * savv4x.com's config declares primary #FF1744, primary-dim #8a0a1a,
+ * accent #FF4444, blood #DC143C, crimson #B22222 and ember #FF6B35. Six reds.
+ * 100bandplan declares `--cyan: #3fd8ff`. One.
+ *
+ * Both blind judges picked savv4x as the machine-generated site. Six
+ * near-identical reds is what a palette looks like when nobody decided — the
+ * eye cannot separate #FF4444 from #FF1744, so the extra five buy nothing and
+ * cost the only thing that would have read: commitment.
+ *
+ * A world may declare extra colours, but not extra colours that are secretly
+ * the SAME colour. Anything within `minSeparation` degrees of the accent, at
+ * comparable saturation, is a duplicate wearing a different name.
+ */
+export function assertHueDiscipline(
+  accent: string,
+  others: readonly string[],
+  minSeparation = 25,
+): void {
+  const a = hsl(accent);
+  const clashes = others.filter((c) => {
+    const o = hsl(c);
+    if (o.s < 0.25) return false;                       // a real neutral is fine
+    const d = Math.abs(o.h - a.h);
+    return Math.min(d, 360 - d) < minSeparation;
+  });
+  if (clashes.length) {
+    throw new Error(
+      `COLD OPEN refused the palette: ${clashes.length} colour(s) sit within ${minSeparation}° of the accent ${accent} — ${clashes.join(', ')}. ` +
+      `They are the same hue under different names, which is what a palette looks like when nobody decided. Keep ONE and delete the rest.`,
+    );
+  }
+}
+
 export interface WorldAudit {
   readonly ok: boolean;
   readonly moveCount: number;
@@ -323,10 +359,22 @@ export function auditWorld(w: World, ledger?: Ledger): WorldAudit {
   if (inkOnGround < 4.5) problems.push(`body ink ${w.palette.ink} on ground ${w.palette.ground} is ${inkOnGround.toFixed(2)}:1 — below 4.5:1`);
   if (accentOnGround < 3) problems.push(`accent ${w.palette.accent} on ground ${w.palette.ground} is ${accentOnGround.toFixed(2)}:1 — below 3:1, it will read as faint`);
 
+  /* THE MOVES ARE A PALETTE, NOT A CHECKLIST.
+   *
+   * This used to demand 6 of 7, which is stricter than the reference sites it
+   * was derived from: only two of the five carry HUD chrome and only two state
+   * a threshold. The winners average five to six; the site both judges picked
+   * as machine-made carries three.
+   *
+   * So two are mandatory and the rest is a choice. A world that cannot name
+   * itself is a layout; a world you do not cross into is a page. */
   const missingMoves = MOVES.filter(m => !w.moves.includes(m));
-  if (w.moves.length < 6) problems.push(`only ${w.moves.length}/7 moves — a world under 6 reads as a template`);
   if (!w.moves.includes('named_premise')) problems.push('no named premise — this is not a world, it is a layout');
   if (!w.moves.includes('threshold_ritual')) problems.push('no threshold ritual — the visitor never crosses anything');
+  const optional = w.moves.filter(m => m !== 'named_premise' && m !== 'threshold_ritual').length;
+  if (optional < 4) {
+    problems.push(`only ${optional}/5 of the optional moves — the reference site that both blind judges picked as machine-made carried three. Four is the floor.`);
+  }
 
   // the lexicon leak test: generic section names mean the world did not reach the copy
   const generic = ['contact', 'about', 'gallery', 'music', 'videos', 'home', 'work', 'portfolio', 'bio', 'news', 'shop', 'enter site', 'learn more', 'get in touch'];
@@ -336,7 +384,7 @@ export function auditWorld(w: World, ledger?: Ledger): WorldAudit {
     }
   }
 
-  if (!w.sound) problems.push('no sound bed — sound is one of the seven moves, not an optional extra');
+  if (w.moves.includes('sound_control') && !w.sound) problems.push('the world claims the sound move but carries no bed');
 
   for (const r of w.registers ?? []) {
     if (!r.evidenceId) {
@@ -350,6 +398,24 @@ export function auditWorld(w: World, ledger?: Ledger): WorldAudit {
   }
   if (!w.ground?.src) problems.push('no full-bleed ground media');
   if (!w.chrome?.docCode) problems.push('no document code — the HUD has nothing technical to say');
+
+  /* PLACEHOLDERS ARE A BUILD ERROR.
+   *
+   * The starter world shipped with REPLACE ME in nine slots and built clean,
+   * because no rule was looking for it. The first thing a stranger does is
+   * copy that template and run it, and a green build on an unfilled template
+   * teaches exactly the wrong lesson about what this thing checks. */
+  const PLACEHOLDER = /\b(replace me|lorem ipsum|your artist|todo|tbd|xxx+|placeholder|example\.com)\b/i;
+  const slots: [string, string][] = [
+    ['name', w.name], ['logline', w.logline], ['artist', w.artist], ['domain', w.domain],
+    ['threshold.label', w.threshold.label], ['threshold.reward', w.threshold.reward],
+    ['chrome.docCode', w.chrome.docCode],
+    ...Object.entries(w.lexicon).map(([k, v]) => [`lexicon.${k}`, String(v)] as [string, string]),
+  ];
+  const unfilled = slots.filter(([, v]) => PLACEHOLDER.test(v)).map(([k]) => k);
+  if (unfilled.length) {
+    problems.push(`${unfilled.length} slot(s) still hold placeholder text: ${unfilled.join(', ')}. A world is not a world until it is named.`);
+  }
 
   if (ledger) {
     const missed = ledger.missed();
