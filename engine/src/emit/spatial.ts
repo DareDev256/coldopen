@@ -1,61 +1,57 @@
 /**
  * COLD OPEN — the SPATIAL topology.
  *
- * The other topologies are pages. This one is an OBJECT: a thing that sits
- * closed on the ground, that you physically open, and that has the artist's
- * work inside it rather than laid out beneath it.
+ * The other topologies are pages. This one is an OBJECT: a thing that stands
+ * in front of you, that you open, and that has the artist's work packed inside
+ * it rather than laid out beneath it.
  *
- * That distinction is the whole reason topology is the divergence axis. A
- * dossier and a broadcast are different documents; an object is a different
- * kind of site. The catalogue is not a grid — it is contents.
- *
- * Everything below the object reuses the shared sections, so the ledger, the
- * rail and the SOURCES table behave identically across topologies.
+ * The first pass laid the case flat, hinged at the back. It read as a laptop.
+ * A designer cabin case STANDS UP — ribbed shell, corner caps, wheels, a
+ * telescoping handle — and it opens as a clamshell, splitting down the middle.
+ * That is the difference between a box and a piece of luggage, and it is the
+ * whole reason to build an object instead of a grid.
  */
 
 import type { World } from '../world.ts';
 import { hsl } from '../world.ts';
-import { Ledger, renderValue } from '../ledger.ts';
-import type { SiteContent, Unit } from './html.ts';
 
 const alpha = (hex: string, a: number) => {
   const h = hex.replace('#', '');
   const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 };
-const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 export interface CaseShell {
-  /** the object's material — drives the shell rendering */
-  readonly material: 'lacquer' | 'leather' | 'aluminium';
-  /** stamps stuck to the outside. Each must be a real place, from the ledger. */
+  readonly material: 'aluminium' | 'lacquer' | 'polycarbonate';
   readonly stamps: readonly { text: string; sub: string; rotate: number; factId?: string }[];
-  /** the image reflected in the lid's mirror */
   readonly mirror: string;
-  /** how the trays are divided. Each tray is a named layer of the catalogue. */
   readonly trays: readonly { label: string; from: number; to: number }[];
-  /** engraved on the hardware */
+  /** stamped into the shell plate */
   readonly engraving: string;
+  /** how many items ride in the open case itself, before the rest */
+  readonly packed?: number;
 }
 
 export function emitSpatialCSS(w: World, shell: CaseShell): string {
   const { ground, accent, payoff, ink, muted } = w.palette;
-  const lightGround = hsl(ground).l > 0.5;
-  const shellBase = shell.material === 'lacquer' ? '#0C0A0D' : shell.material === 'leather' ? '#1A1113' : '#B9BEC6';
-  const shellHi = shell.material === 'aluminium' ? '#EDF0F4' : alpha(ink, 0.14);
+  const metal = shell.material === 'aluminium';
+  const shellA = metal ? '#C3C8CF' : '#131117';
+  const shellB = metal ? '#7C838D' : '#08070A';
+  const shellC = metal ? '#EEF1F5' : '#2A2630';
+  const lining = alpha(accent, 0.10);
 
   return `/* =========================================================
    ${w.artist} — "${w.name}"  ·  SPATIAL
    ${w.logline}
 
-   Not a page with sections. An object that opens.
+   Not a page with sections. A case that stands up and opens.
    ========================================================= */
 
 :root{
   --ground:${ground}; --ink:${ink}; --muted:${muted}; --subtle:${alpha(ink, 0.34)};
   --accent:${accent}; --accent-line:${alpha(accent, 0.42)}; --payoff:${payoff};
   --line:${alpha(ink, 0.16)};
-  --shell:${shellBase}; --shell-hi:${shellHi};
+  --shellA:${shellA}; --shellB:${shellB}; --shellC:${shellC};
   --f-disp:'${w.type.display.family}', system-ui, sans-serif;
   --f-text:'${w.type.text.family}', system-ui, sans-serif;
   --f-mono:'${w.type.mono.family}', ui-monospace, monospace;
@@ -67,180 +63,285 @@ body{background:var(--ground);color:var(--ink);font-family:var(--f-text);overflo
   -webkit-font-smoothing:antialiased;min-height:100vh}
 img,video{display:block;max-width:100%}
 a{color:inherit}
+button{font:inherit}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 ::selection{background:var(--accent);color:${ground}}
 
-/* ---------- the stage the object sits on ---------- */
-#stage{ position:relative; min-height:100vh; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; padding:clamp(3rem,7vh,5rem) var(--gut) clamp(2rem,5vh,3.5rem); perspective:2100px; }
-/* the lid needs somewhere to lean back into once it is open */
-.case.open{ margin-top:clamp(5rem,16vw,12rem); }
-#stage::after{ /* the object casts onto its ground */
-  content:""; position:absolute; left:50%; bottom:14%; width:min(72vw,760px); height:80px;
-  transform:translateX(-50%); border-radius:50%; pointer-events:none;
-  background:radial-gradient(closest-side, ${alpha('#000000', 0.5)}, transparent 74%); filter:blur(14px); }
+/* =========================================================
+   1 · THE STAND — where the case waits
+   ========================================================= */
+#stage{ position:relative; min-height:100svh; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; padding:clamp(2.2rem,5vh,4rem) var(--gut) clamp(2rem,5vh,3.5rem);
+  perspective:1500px; perspective-origin:50% 42%; gap:clamp(.7rem,2vh,1.3rem); }
+/* the floor it stands on */
+#stage::after{ content:""; position:absolute; left:50%; bottom:clamp(6rem,15vh,11rem); width:min(56vw,440px); height:44px;
+  transform:translateX(-50%); border-radius:50%; pointer-events:none; z-index:0;
+  background:radial-gradient(closest-side, ${alpha('#000000', 0.55)}, transparent 76%); filter:blur(11px); }
 
 .premise{ font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.42em; text-transform:uppercase;
-  color:var(--accent); font-weight:700; margin-bottom:.7rem; }
+  color:var(--accent); font-weight:700; text-align:center; }
 .wordmark{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
-  font-size:clamp(2rem,8.5vw,6.2rem); line-height:.86; letter-spacing:-.035em; text-align:center; margin-bottom:1.6rem; }
+  font-size:clamp(1.7rem,6.5vw,4.4rem); line-height:.86; letter-spacing:-.035em; text-align:center; }
 
 /* =========================================================
-   THE OBJECT
+   2 · THE CASE — upright, ribbed, on wheels
    ========================================================= */
-/* Closed, this has to read as a BOX sitting on a surface — a shallow lid on a
-   shallow base. The first pass gave it a tall base full of hidden trays, which
-   rendered as a black slab running off the bottom of the screen and looked
-   like a laptop. Depth arrives when it opens, not before. */
-.case{ position:relative; width:min(84vw,780px); transform-style:preserve-3d;
-  transform:rotateX(24deg); transition:transform 1.1s cubic-bezier(.16,1,.3,1); }
-.case.open{ transform:rotateX(19deg); }
-
-/* ---- the lid ---- */
-.lid{ position:relative; height:clamp(96px,14vw,150px); transform-origin:50% 0%; transform-style:preserve-3d;
-  transform:rotateX(0deg); transition:transform 1.15s cubic-bezier(.34,1.16,.42,1); z-index:3; }
-/* Chosen by measuring, not by eye.
+/* Sized from viewport HEIGHT, not width.
  *
- * The lid must pass 90 degrees for its INNER face to turn toward the viewer at
- * all — under 90 you are still looking at the stamped shell. But the useful
- * range is narrow: with the case tipped 19 degrees, -126 rendered the mirror
- * 26px tall and -140 only 58px. Sweeping the angle and measuring the lid's
- * actual client height gave -158, where it renders 94px and reads as a mirror
- * rather than a dark strip. Physically this is the lid folded right back
- * behind the case, which is how a flat-hinged vanity case actually opens. */
-.case.open .lid{ transform:rotateX(-158deg); }
+ * Width-based sizing put the case at 614px of a 664px phone screen and pushed
+ * the language tags below the fold — which is the precise failure the tags
+ * exist to avoid. Driving the height guarantees the object AND its tags share
+ * one screen at any aspect ratio. */
+.case{ position:relative; height:min(46svh,430px); width:auto; aspect-ratio:.72; transform-style:preserve-3d;
+  transform:rotateY(-15deg) rotateX(3deg); transition:transform 1.2s cubic-bezier(.16,1,.3,1); z-index:2;
+  margin-top:clamp(2.4rem,6vh,4.2rem); }
+.case.open{ transform:rotateY(0deg) rotateX(1deg) scale(1.12); }
 
-.lid-out,.lid-in{ position:absolute; inset:0; backface-visibility:hidden; border-radius:10px 10px 3px 3px; overflow:hidden; }
-.lid-out{
-  background:linear-gradient(158deg, ${shellHi} 0%, var(--shell) 42%, #000 130%);
-  box-shadow:inset 0 1px 0 ${alpha('#ffffff', 0.16)}, inset 0 -12px 26px ${alpha('#000000', 0.5)}, 0 20px 44px ${alpha('#000000', 0.42)};
-  border:1px solid ${alpha('#000000', 0.6)};
+/* the telescoping handle, behind the shell */
+.tele{ position:absolute; left:26%; right:26%; top:-11%; height:12%; z-index:0; transform:translateZ(-26px); }
+.tele span{ position:absolute; top:0; bottom:0; width:7px; border-radius:4px;
+  background:linear-gradient(90deg, ${alpha('#ffffff', 0.5)}, var(--shellB)); box-shadow:0 2px 6px ${alpha('#000000', 0.5)}; }
+.tele span:first-child{ left:0 } .tele span:last-child{ right:0 }
+.tele::after{ content:""; position:absolute; left:-6px; right:-6px; top:0; height:12px; border-radius:6px;
+  background:linear-gradient(180deg, var(--shellC), var(--shellB)); box-shadow:0 3px 8px ${alpha('#000000', 0.55)}; }
+
+/* the two halves of the clamshell */
+.half{ position:absolute; top:0; bottom:0; width:50.4%; transform-style:preserve-3d; z-index:3;
+  transition:transform 1.35s cubic-bezier(.5,.02,.28,1); }
+.half.l{ left:0; transform-origin:left center; }
+.half.r{ right:0; transform-origin:right center; }
+.case.open .half.l{ transform:rotateY(-124deg); }
+.case.open .half.r{ transform:rotateY(124deg); }
+
+.face{ position:absolute; inset:0; backface-visibility:hidden; overflow:hidden; }
+/* the ribbed shell — the one detail that says "luggage" and not "box" */
+.face.out{
+  background:
+    repeating-linear-gradient(90deg,
+      ${alpha('#000000', metal ? 0.16 : 0.5)} 0 2px,
+      transparent 2px 5px,
+      ${alpha('#ffffff', metal ? 0.34 : 0.06)} 5px 7px,
+      transparent 7px 22px),
+    linear-gradient(104deg, var(--shellC) 0%, var(--shellA) 34%, var(--shellB) 74%, #000 130%);
+  box-shadow:inset 0 0 0 1px ${alpha('#000000', 0.55)}, 0 26px 54px ${alpha('#000000', 0.5)};
 }
-/* the underside of the lid, plain once it has folded away */
-.lid-in{ transform:rotateX(180deg); background:#0A0A0C; border:1px solid ${alpha('#000000', 0.7)};
-  box-shadow:inset 0 0 0 6px ${alpha(payoff, 0.22)}; }
+.half.l .face.out{ border-radius:14px 3px 3px 14px; }
+.half.r .face.out{ border-radius:3px 14px 14px 3px; }
+/* The inside of each half. It first rendered as a flat black rectangle, which
+   is what a lid looks like if you forget it has a lining, a divider and a
+   branded strip in it — the details that separate luggage from a box. */
+.face.in{ transform:rotateY(180deg);
+  background:
+    repeating-linear-gradient(52deg, ${alpha(accent, 0.09)} 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(-52deg, ${alpha(accent, 0.06)} 0 1px, transparent 1px 8px),
+    linear-gradient(160deg, #1A1720, #08070B 82%);
+  box-shadow:inset 0 0 0 2px ${alpha(payoff, 0.34)}, inset 0 0 44px ${alpha('#000000', 0.9)}; }
+/* the zip divider that runs round the lid */
+.face.in::before{ content:""; position:absolute; inset:7%; border-radius:3px; pointer-events:none;
+  border:1px dashed ${alpha('#ffffff', 0.2)};
+  background:repeating-linear-gradient(90deg, transparent 0 6px, ${alpha('#ffffff', 0.05)} 6px 7px); }
+/* the maker's strip, the way a real lining carries one */
+.face.in::after{ content:"${(w.artist + ' · ' + w.name).toUpperCase()}"; position:absolute; left:0; right:0; bottom:11%;
+  text-align:center; font-family:var(--f-mono); font-size:clamp(.36rem,.85vw,.46rem); letter-spacing:.34em;
+  color:${alpha(payoff, 0.62)}; pointer-events:none; }
+.half.l .face.in{ border-radius:14px 3px 3px 14px } .half.r .face.in{ border-radius:3px 14px 14px 3px }
 
-/* THE MIRROR.
- *
- * It began life as the lid's inner face on a 3D backface, and CSS perspective
- * fought it at every angle: past 90 degrees it was 26px of dark strip, and the
- * angle that finally rendered it 94px tall pushed it clean off the top of the
- * viewport. A detail nobody can see is not a detail.
- *
- * So it sits where you would actually see it — looking down into the open case,
- * seated above the trays. Same object, no perspective to fight. */
-.mirror{ position:relative; height:clamp(96px,15vw,168px); margin-bottom:clamp(.7rem,1.6vw,1.1rem);
-  border-radius:4px; overflow:hidden; background:#08080A;
-  box-shadow:inset 0 0 0 5px ${alpha(payoff, 0.5)}, inset 0 0 40px ${alpha('#000000', 0.95)},
-             0 6px 18px ${alpha('#000000', 0.6)};
-  opacity:0; transform:translateY(-10px); transition:opacity .7s ease .18s, transform .8s cubic-bezier(.16,1,.3,1) .18s; }
-.case.open .mirror{ opacity:1; transform:none; }
-.mirror img{ width:100%; height:100%; object-fit:cover; object-position:50% 28%;
-  filter:contrast(1.06) saturate(.9) brightness(1.04); }
-/* the sheen that makes it read as glass rather than a photo in a hole */
+/* corner caps */
+.cap{ position:absolute; width:15%; height:11%; z-index:4; pointer-events:none;
+  background:linear-gradient(140deg, ${alpha('#ffffff', 0.42)}, ${alpha('#000000', 0.5)}); }
+.cap.tl{ top:0; left:0; border-radius:14px 0 40% 0 } .cap.bl{ bottom:0; left:0; border-radius:0 40% 0 14px }
+.cap.tr{ top:0; right:0; border-radius:0 14px 0 40% } .cap.br{ bottom:0; right:0; border-radius:40% 0 14px 0 }
+
+/* the seam down the middle — a dark gap where the two halves meet */
+.seam{ position:absolute; z-index:5; top:1%; bottom:1%; left:50%; width:5px; transform:translateX(-50%);
+  background:linear-gradient(90deg, ${alpha('#000000', 0.1)}, ${alpha('#000000', 0.86)} 45%, ${alpha('#000000', 0.86)} 55%, ${alpha('#ffffff', 0.22)});
+  border-radius:2px; transition:opacity .4s; }
+.case.open .seam{ opacity:0 }
+
+/* the latches down the seam */
+.latch{ position:absolute; left:50%; transform:translateX(-50%); z-index:6; width:13%; height:4.4%;
+  border-radius:2px; background:linear-gradient(180deg, var(--payoff), ${alpha(payoff, 0.45)});
+  box-shadow:0 2px 6px ${alpha('#000000', 0.6)}, inset 0 1px 0 ${alpha('#ffffff', 0.6)};
+  transition:opacity .4s; }
+.latch.a{ top:26% } .latch.b{ top:66% }
+.case.open .latch{ opacity:0 }
+
+/* the plate */
+/* recessed and dark, so it reads on brushed metal instead of vanishing into it */
+.plate{ position:absolute; z-index:5; top:7%; left:50%; transform:translateX(-50%);
+  font-family:var(--f-mono); font-size:clamp(.46rem,1.05vw,.58rem); letter-spacing:.26em; font-weight:700;
+  color:${alpha(payoff, 0.95)}; background:${alpha('#000000', 0.82)};
+  border:1px solid ${alpha(payoff, 0.4)}; padding:.34rem .62rem; border-radius:2px;
+  box-shadow:inset 0 1px 3px ${alpha('#000000', 0.9)}, 0 1px 0 ${alpha('#ffffff', 0.35)};
+  transition:opacity .4s; white-space:nowrap; }
+.case.open .plate{ opacity:0 }
+
+/* travel stamps stuck to the shell */
+.stamp{ position:absolute; z-index:5; padding:.34rem .5rem; border:2px solid ${alpha(accent, 0.9)};
+  color:${alpha(accent, 0.95)}; font-family:var(--f-mono); text-transform:uppercase; text-align:center;
+  border-radius:3px; background:${alpha('#000000', 0.42)}; transition:opacity .4s; white-space:nowrap; }
+.stamp{ max-width:80% }
+.stamp b{ display:block; font-size:clamp(.42rem,1.05vw,.62rem); letter-spacing:.1em; font-weight:700 }
+.stamp i{ display:block; font-style:normal; font-size:.42rem; letter-spacing:.16em; opacity:.78; margin-top:1px }
+.case.open .stamp{ opacity:0 }
+
+/* wheels + grab handles */
+.wheel{ position:absolute; bottom:-2.6%; width:8.5%; height:4.2%; z-index:0; border-radius:0 0 50% 50%/0 0 100% 100%;
+  background:linear-gradient(180deg, #34343C, #0A0A0C 74%);
+  box-shadow:0 5px 10px ${alpha('#000000', 0.66)} }
+.wheel.w1{ left:9% } .wheel.w2{ left:27% } .wheel.w3{ right:27% } .wheel.w4{ right:9% }
+.grab{ position:absolute; z-index:6; background:linear-gradient(180deg, var(--shellC), var(--shellB));
+  border-radius:5px; box-shadow:0 3px 8px ${alpha('#000000', 0.5)} }
+.grab.top{ top:-3.4%; left:38%; width:24%; height:3.4% }
+.grab.side{ top:44%; right:-2.4%; width:3.2%; height:15%; border-radius:4px }
+
+/* =========================================================
+   3 · THE LUGGAGE TAG — and the language choice
+   It hangs on the handle, at eye level, and picking one is what opens
+   the case. A language switch tucked in a corner is a switch nobody finds.
+   ========================================================= */
+.tagline{ font-family:var(--f-mono); font-size:clamp(.56rem,1.3vw,.7rem); letter-spacing:.26em;
+  text-transform:uppercase; color:${alpha(ink, 0.86)}; text-align:center; line-height:2; }
+.tagline b{ color:var(--accent); font-weight:700 }
+.tags{ display:flex; gap:clamp(.5rem,1.4vw,.9rem); justify-content:center; flex-wrap:wrap; z-index:6; position:relative; }
+.tag{ position:relative; cursor:pointer; border:0; padding:0; background:none; }
+/* the string it hangs by */
+.tag::before{ content:""; position:absolute; left:50%; top:-14px; width:1px; height:14px;
+  background:${alpha(ink, 0.5)}; }
+.tag-body{ display:block; min-width:clamp(84px,15vw,116px); padding:1.15rem .7rem .6rem; border-radius:3px;
+  background:linear-gradient(160deg, ${alpha(ink, 0.94)}, ${alpha(ink, 0.8)}); color:${ground};
+  box-shadow:0 6px 16px ${alpha('#000000', 0.45)}; transition:transform .28s cubic-bezier(.16,1,.3,1), box-shadow .28s;
+  border-top:3px solid var(--accent); }
+.tag:hover .tag-body,.tag:focus-visible .tag-body{ transform:translateY(-5px) rotate(-1.4deg);
+  box-shadow:0 14px 26px ${alpha('#000000', 0.55)}; outline:none }
+.tag-code{ display:block; font-family:var(--f-disp); font-weight:900; font-size:clamp(1.1rem,2.6vw,1.5rem);
+  letter-spacing:.04em; line-height:1 }
+.tag-name{ display:block; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.2em; text-transform:uppercase;
+  opacity:.66; margin-top:.28rem }
+/* the punched hole */
+.tag-body::after{ content:""; position:absolute; left:50%; top:9px; transform:translateX(-50%);
+  width:7px; height:7px; border-radius:50%; background:var(--ground); box-shadow:inset 0 1px 2px ${alpha('#000000', 0.6)} }
+.tags.gone{ opacity:0; pointer-events:none; transition:opacity .5s }
+
+/* =========================================================
+   4 · WHAT IS PACKED INSIDE
+   ========================================================= */
+.inside{ position:absolute; inset:0; z-index:1; display:grid; grid-template-columns:1fr 1fr;
+  gap:2px; padding:3.5%; border-radius:12px; overflow:hidden;
+  background:linear-gradient(160deg, #17141D, #08070B 78%);
+  box-shadow:inset 0 0 0 2px ${alpha(payoff, 0.24)}, inset 0 0 60px ${alpha('#000000', 0.92)};
+  opacity:0; transition:opacity .5s ease .55s; }
+.case.open .inside{ opacity:1 }
+/* the lining weave */
+.inside::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background:repeating-linear-gradient(48deg, ${lining} 0 1px, transparent 1px 7px) }
+
+.compartment{ position:relative; padding:4.5%; display:flex; flex-direction:column; gap:4.5%; min-height:0 }
+
+/* left: the mirror in the lid, and the tag pocket */
+.mirror{ position:relative; flex:1 1 56%; border-radius:3px; overflow:hidden; background:#08080A; min-height:0;
+  box-shadow:inset 0 0 0 3px ${alpha(payoff, 0.55)}, 0 5px 14px ${alpha('#000000', 0.7)} }
+.mirror img{ width:100%; height:100%; object-fit:cover; object-position:50% 24%;
+  filter:contrast(1.05) saturate(.9) brightness(1.05) }
 .mirror::after{ content:""; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(112deg, ${alpha('#ffffff', 0.22)} 0%, transparent 24%, transparent 64%, ${alpha('#ffffff', 0.1)} 90%); }
-.mirror-cap{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.8rem .9rem;
-  font-family:var(--f-mono); font-size:.58rem; letter-spacing:.26em; text-transform:uppercase;
-  color:${alpha('#ffffff', 0.9)}; background:linear-gradient(transparent, ${alpha('#000000', 0.86)}); }
+  background:linear-gradient(116deg, ${alpha('#ffffff', 0.26)} 0%, transparent 22%, transparent 66%, ${alpha('#ffffff', 0.12)} 92%) }
+.mirror-cap{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.5rem .55rem;
+  font-family:var(--f-mono); font-size:clamp(.42rem,1vw,.54rem); letter-spacing:.22em; text-transform:uppercase;
+  color:${alpha('#ffffff', 0.92)}; background:linear-gradient(transparent, ${alpha('#000000', 0.88)}) }
+/* the zip mesh pocket */
+.pocket{ position:relative; flex:0 0 34%; border-radius:3px; overflow:hidden; min-height:0;
+  background:${alpha('#ffffff', 0.05)};
+  box-shadow:inset 0 0 0 1px ${alpha('#ffffff', 0.14)} }
+.pocket::before{ content:""; position:absolute; inset:0;
+  background:repeating-linear-gradient(45deg, ${alpha('#ffffff', 0.12)} 0 1px, transparent 1px 6px),
+             repeating-linear-gradient(-45deg, ${alpha('#ffffff', 0.12)} 0 1px, transparent 1px 6px) }
+.zip{ position:absolute; top:0; left:0; right:0; height:7px; z-index:2;
+  background:repeating-linear-gradient(90deg, ${alpha(payoff, 0.85)} 0 2px, ${alpha('#000000', 0.5)} 2px 4px) }
+.pocket-t{ position:absolute; inset:auto 0 0 0; z-index:3; padding:.5rem .55rem;
+  font-family:var(--f-mono); font-size:clamp(.4rem,.95vw,.5rem); letter-spacing:.18em; text-transform:uppercase;
+  color:${alpha('#ffffff', 0.78)}; line-height:1.7 }
 
-/* travel stamps on the shell — each one a place she has actually been */
-.stamp{ position:absolute; z-index:2; padding:.42rem .62rem; border:2px solid ${alpha(accent, 0.72)};
-  color:${alpha(accent, 0.86)}; font-family:var(--f-mono); text-transform:uppercase; text-align:center;
-  border-radius:3px; background:${alpha('#000000', 0.2)}; mix-blend-mode:screen; }
-.stamp b{ display:block; font-size:clamp(.6rem,1.4vw,.78rem); letter-spacing:.14em; font-weight:700; }
-.stamp i{ display:block; font-style:normal; font-size:.5rem; letter-spacing:.2em; opacity:.72; margin-top:2px; }
+/* right: the packed items under elastic straps */
+.packed{ position:relative; flex:1; display:flex; flex-direction:column; gap:4%; min-height:0 }
+.strap{ position:absolute; z-index:4; pointer-events:none; background:${alpha('#1A1A20', 0.9)};
+  box-shadow:0 1px 3px ${alpha('#000000', 0.7)}, inset 0 1px 0 ${alpha('#ffffff', 0.14)} }
+.strap.h{ left:-3%; right:-3%; height:8px; top:47%; z-index:6 }
+.strap.buckle{ left:50%; top:calc(47% - 5px); transform:translateX(-50%); width:18px; height:16px; border-radius:2px; z-index:7;
+  background:linear-gradient(180deg, var(--payoff), ${alpha(payoff, 0.5)}) }
+.item{ position:relative; flex:1; border-radius:2px; overflow:hidden; display:block; text-decoration:none;
+  min-height:0; background:#000; box-shadow:inset 0 0 0 1px ${alpha('#ffffff', 0.1)}, 0 3px 8px ${alpha('#000000', 0.6)};
+  transition:transform .35s cubic-bezier(.16,1,.3,1) }
+.item:hover,.item:focus-visible{ transform:scale(1.035); outline:none; z-index:5 }
+.item img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.94 }
+.item::after{ content:""; position:absolute; inset:0; background:linear-gradient(transparent 38%, ${alpha('#000000', 0.92)}) }
+.item-t{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.4rem .45rem }
+.item-t b{ display:block; font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
+  font-size:clamp(.56rem,1.25vw,.74rem); line-height:1.04; color:#fff }
+.item-t i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:clamp(.36rem,.9vw,.46rem);
+  letter-spacing:.11em; color:${alpha('#ffffff', 0.7)}; margin-top:.14rem; text-transform:uppercase }
 
-/* the hardware */
-.clasp{ position:absolute; z-index:5; top:calc(clamp(96px,14vw,150px) - 13px); left:50%; transform:translateX(-50%);
-  width:clamp(58px,9vw,86px); height:26px; border-radius:3px;
-  background:linear-gradient(180deg, ${payoff}, ${alpha(payoff, 0.5)});
-  box-shadow:0 2px 7px ${alpha('#000000', 0.62)}, inset 0 1px 0 ${alpha('#ffffff', 0.55)};
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--f-mono); font-size:.46rem; letter-spacing:.16em; color:${alpha('#000000', 0.7)}; font-weight:700; }
-.case.open .clasp{ opacity:0; transition:opacity .3s; }
-.hinge{ position:absolute; z-index:4; top:0; height:9px; width:34px; border-radius:2px;
-  background:linear-gradient(180deg, ${payoff}, ${alpha(payoff, 0.34)}); box-shadow:0 1px 4px ${alpha('#000000', 0.6)}; }
-.hinge.l{ left:16%; } .hinge.r{ right:16%; }
+.hint{ font-family:var(--f-mono); font-size:.58rem; letter-spacing:.26em; text-transform:uppercase;
+  color:var(--accent); text-align:center; opacity:0; transition:opacity .5s ease .9s }
+.case.open ~ .hint{ opacity:1 }
 
-/* ---- the base, and the fitted trays inside it ---- */
-.base{ position:relative; border-radius:3px 3px 12px 12px; padding:clamp(.7rem,1.6vw,1.1rem);
-  background:linear-gradient(180deg, var(--shell) 0%, #050506 100%);
-  border:1px solid ${alpha('#000000', 0.66)};
-  box-shadow:inset 0 2px 0 ${alpha('#ffffff', 0.1)}, 0 30px 60px ${alpha('#000000', 0.55)};
-  /* shallow while shut, deep once open */
-  max-height:clamp(78px,11vw,118px); overflow:hidden;
-  transition:max-height 1.1s cubic-bezier(.16,1,.3,1), padding .6s ease; }
-.case.open .base{ max-height:400vh; padding:clamp(.9rem,2vw,1.4rem); }
-/* the front wall, so a closed case reads as an object and not a rectangle */
-.base::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:clamp(10px,1.6vw,16px);
-  border-radius:0 0 12px 12px; pointer-events:none;
-  background:linear-gradient(180deg, transparent, ${alpha('#000000', 0.85)}); }
-/* the cut-foam the contents sit in */
-.foam{ background:${alpha('#000000', 0.55)}; border-radius:5px; padding:clamp(.7rem,1.6vw,1.1rem);
-  box-shadow:inset 0 3px 14px ${alpha('#000000', 0.9)}; }
-.tray{ margin-bottom:clamp(.7rem,1.6vw,1.1rem); opacity:0; transform:translateY(16px);
-  transition:opacity .6s ease, transform .7s cubic-bezier(.16,1,.3,1); }
-.tray:last-child{ margin-bottom:0; }
-.case.open .tray{ opacity:1; transform:none; }
-.case.open .tray:nth-child(2){ transition-delay:.34s } .case.open .tray:nth-child(3){ transition-delay:.5s }
-.tray-lab{ font-family:var(--f-mono); font-size:.54rem; letter-spacing:.3em; text-transform:uppercase;
-  color:${alpha(accent, 0.78)}; margin-bottom:.6rem; display:flex; align-items:center; gap:.6rem; }
-.tray-lab::after{ content:""; flex:1; height:1px; background:${alpha(accent, 0.2)}; }
+/* =========================================================
+   5 · THE REST OF THE LUGGAGE, unpacked below
+   ========================================================= */
+main{ position:relative; z-index:10 }
+section{ padding:clamp(3.5rem,9vh,7rem) var(--gut); position:relative }
+.slug{ font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.34em; text-transform:uppercase;
+  color:var(--accent); font-weight:700; margin-bottom:1.1rem; display:flex; align-items:center; gap:.8rem }
+.slug::after{ content:""; flex:1; height:1px; background:var(--accent-line) }
+h2{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase; letter-spacing:-.02em; line-height:.92;
+  font-size:clamp(1.8rem,6vw,4.2rem); margin-bottom:1.6rem }
+p{ font-family:var(--f-text); line-height:1.7; color:${alpha(ink, 0.9)}; max-width:60ch;
+  font-size:clamp(1rem,1.5vw,1.1rem) }
+p + p{ margin-top:1rem }
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:none}
 
-/* one track = one compact seated in a cutout */
-/* Each tray declares how many compartments it has (--n, from its item count),
-   so a tray of four is four across rather than three-and-a-gap. auto-fit still
-   guessed, and a guess leaves dead foam. The slot is 16:9 because the material
-   is 16:9 — forcing a square letterboxed every thumbnail in black bars. */
-.slots{ display:grid; gap:clamp(.5rem,1.2vw,.8rem); grid-template-columns:repeat(var(--n,3),1fr); }
-@media (max-width:900px){ .slots{ grid-template-columns:repeat(min(var(--n,3),2),1fr); } }
-@media (max-width:560px){ .slots{ grid-template-columns:1fr; } }
-.slot{ position:relative; aspect-ratio:16/9; border-radius:4px; overflow:hidden; display:block; text-decoration:none;
-  background:#000; box-shadow:inset 0 0 0 1px ${alpha('#ffffff', 0.09)}, 0 5px 12px ${alpha('#000000', 0.66)};
-  transition:transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s; }
-.slot:hover,.slot:focus-visible{ transform:translateY(-6px) scale(1.03); outline:none;
-  box-shadow:inset 0 0 0 1px var(--accent), 0 14px 26px ${alpha('#000000', 0.78)}; }
-.slot img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.92;
-  transition:opacity .35s, transform .6s; }
-.slot:hover img{ opacity:1; transform:scale(1.06); }
-.slot::after{ content:""; position:absolute; inset:0; background:linear-gradient(transparent 34%, ${alpha('#000000', 0.9)}); }
-.slot-t{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.55rem .55rem .5rem; }
-.slot-t b{ display:block; font-family:var(--f-disp); font-weight:900; text-transform:uppercase; letter-spacing:-.01em;
-  font-size:clamp(.68rem,1.5vw,.82rem); line-height:1.04; color:#fff; }
+.cube{ margin-bottom:clamp(1rem,2.4vw,1.6rem); border-radius:5px; padding:clamp(.8rem,1.8vw,1.2rem);
+  background:${alpha('#000000', 0.34)}; box-shadow:inset 0 0 0 1px ${alpha(ink, 0.12)} }
+.cube-lab{ font-family:var(--f-mono); font-size:.56rem; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:.7rem; display:flex; align-items:center; gap:.7rem }
+.cube-lab::after{ content:""; flex:1; height:1px; background:${alpha(accent, 0.22)} }
+.slots{ display:grid; gap:clamp(.5rem,1.2vw,.8rem); grid-template-columns:repeat(var(--n,3),1fr) }
+@media (max-width:900px){ .slots{ grid-template-columns:repeat(min(var(--n,3),2),1fr) } }
+@media (max-width:560px){ .slots{ grid-template-columns:1fr } }
+.slot{ position:relative; aspect-ratio:16/9; border-radius:3px; overflow:hidden; display:block; text-decoration:none;
+  background:#000; box-shadow:inset 0 0 0 1px ${alpha('#ffffff', 0.1)}, 0 5px 12px ${alpha('#000000', 0.6)};
+  transition:transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s }
+.slot:hover,.slot:focus-visible{ transform:translateY(-5px) scale(1.02); outline:none;
+  box-shadow:inset 0 0 0 1px var(--accent), 0 14px 26px ${alpha('#000000', 0.75)} }
+.slot img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .6s }
+.slot:hover img{ transform:scale(1.05) }
+.slot::after{ content:""; position:absolute; inset:0; background:linear-gradient(transparent 36%, ${alpha('#000000', 0.9)}) }
+.slot-t{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.55rem .55rem .5rem }
+.slot-t b{ display:block; font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
+  font-size:clamp(.68rem,1.5vw,.84rem); line-height:1.04; color:#fff }
 .slot-t i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.13em;
-  color:${alpha('#ffffff', 0.66)}; margin-top:.22rem; text-transform:uppercase; }
+  color:${alpha('#ffffff', 0.68)}; margin-top:.22rem; text-transform:uppercase }
 .slot-n{ position:absolute; top:.42rem; left:.48rem; z-index:2; font-family:var(--f-mono); font-size:.48rem;
-  letter-spacing:.14em; color:${alpha(accent, 0.9)}; }
+  letter-spacing:.14em; color:${alpha(accent, 0.92)} }
 
-/* ---- the way in ---- */
-.gate{ margin-top:clamp(1.2rem,3.5vh,2.2rem); display:flex; flex-direction:column; align-items:center; gap:.7rem;
-  transition:opacity .5s; }
-/* A threshold control below the fold is not a threshold. */
-.gate.gone{ opacity:0; pointer-events:none; }
-.gate-b{ font-family:var(--f-mono); font-size:clamp(.62rem,1.4vw,.76rem); letter-spacing:.3em; text-transform:uppercase;
-  color:var(--ink); background:${alpha(ground, 0.4)}; border:1px solid var(--accent); cursor:pointer;
-  padding:1rem 1.7rem; border-radius:2px; position:relative; overflow:hidden; isolation:isolate; transition:color .3s; }
-.gate-b .fill{ position:absolute; inset:0; z-index:-1; background:var(--accent); transform:scaleY(var(--held,0));
-  transform-origin:bottom; transition:transform .1s linear; }
-.gate-b[data-held="1"]{ color:${ground}; }
-.gate-h{ font-family:var(--f-mono); font-size:.6rem; letter-spacing:.26em; text-transform:uppercase; color:var(--accent); }
-
-
-/* ---- chrome ---- */
+/* =========================================================
+   6 · CHROME
+   ========================================================= */
 .hud{ position:fixed; z-index:60; font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.24em;
-  text-transform:uppercase; pointer-events:none; color:var(--muted); }
-.hud-tl{ top:1.1rem; left:var(--gut); color:var(--accent); font-weight:700; }
+  text-transform:uppercase; pointer-events:none; color:var(--muted) }
+.hud-tl{ top:1.1rem; left:var(--gut); color:var(--accent); font-weight:700 }
 .hud-tl i{ color:var(--subtle); font-style:normal; font-weight:400 }
 .hud-tr{ top:1.1rem; right:var(--gut) }
 .hud-bl{ bottom:1.1rem; left:var(--gut) }
-body:has(.dial) .hud-bl{ bottom:3.6rem }
 
-.dial{ position:fixed; z-index:70; left:var(--gut); bottom:1.05rem; display:flex; gap:1px;
-  background:var(--accent-line); border:1px solid var(--accent-line) }
-.dial-b{ background:${alpha(ground, 0.86)}; backdrop-filter:blur(9px); border:0; color:var(--muted); cursor:pointer;
-  font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.24em; text-transform:uppercase; padding:.62rem .9rem;
+/* the small tag that stays once a language is chosen */
+.dial{ position:fixed; z-index:70; top:1rem; left:50%; transform:translateX(-50%); display:flex; gap:1px;
+  background:var(--accent-line); border:1px solid var(--accent-line); border-radius:2px; overflow:hidden;
+  opacity:0; pointer-events:none; transition:opacity .5s }
+.dial.shown{ opacity:1; pointer-events:auto }
+.dial-b{ background:${alpha(ground, 0.9)}; backdrop-filter:blur(9px); border:0; color:var(--muted); cursor:pointer;
+  font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.22em; text-transform:uppercase; padding:.55rem .85rem;
   transition:color .2s, background .2s }
 .dial-b:hover{ color:var(--ink) }
 .dial-b.is-on{ background:var(--accent); color:${ground}; font-weight:700 }
@@ -255,20 +356,6 @@ body:has(.dial) .hud-bl{ bottom:3.6rem }
 .sound.on .bars i{ animation:eq .9s ease-in-out infinite }
 .sound.on .bars i:nth-child(2){animation-delay:.15s}.sound.on .bars i:nth-child(3){animation-delay:.3s}.sound.on .bars i:nth-child(4){animation-delay:.45s}
 @keyframes eq{0%,100%{height:28%}50%{height:100%}}
-
-/* ---- everything under the object ---- */
-main{ position:relative; z-index:10 }
-section{ padding:clamp(3.5rem,9vh,7rem) var(--gut); position:relative }
-.slug{ font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.34em; text-transform:uppercase;
-  color:var(--accent); font-weight:700; margin-bottom:1.1rem; display:flex; align-items:center; gap:.8rem }
-.slug::after{ content:""; flex:1; height:1px; background:var(--accent-line) }
-h2{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase; letter-spacing:-.02em; line-height:.92;
-  font-size:clamp(1.8rem,6vw,4.2rem); margin-bottom:1.6rem }
-p{ font-family:var(--f-text); line-height:1.7; color:${alpha(ink, 0.9)}; max-width:60ch;
-  font-size:clamp(1rem,1.5vw,1.1rem) }
-p + p{ margin-top:1rem }
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
-.reveal.in{opacity:1;transform:none}
 
 .figures{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:1px;
   background:var(--line); border:1px solid var(--line); margin:2.5rem 0; max-width:100%; overflow:hidden }
@@ -319,15 +406,25 @@ footer{ padding:2.5rem var(--gut) 6.5rem; border-top:1px solid var(--line); font
   gap:1rem; flex-wrap:wrap }
 footer a{ color:var(--muted); text-decoration:none } footer a:hover{ color:var(--accent) }
 
-@media (max-width:700px){
+@media (max-width:760px){
   .hud-tr,.hud-bl{ display:none }
-  .sound{ right:auto; left:auto; right:var(--gut) }
-  .case{ transform:rotateX(8deg) } .case.open{ transform:rotateX(16deg) }
+  .case{ height:min(40svh,330px); max-width:78vw }
+  .wordmark{ font-size:clamp(1.4rem,8vw,2.2rem) }
+  .tag-body{ min-width:clamp(70px,22vw,96px); padding:1rem .5rem .5rem }
+  .tagline{ font-size:.54rem; letter-spacing:.18em }
+  /* stamps collided across the seam once the shell narrowed */
+  .stamp{ max-width:72%; padding:.24rem .34rem }
+  .stamp i{ display:none }
+}
+/* short landscape windows: the object gets out of its own way */
+@media (max-height:620px){
+  .case{ height:min(52svh,300px) }
+  .wordmark{ font-size:clamp(1.2rem,5vw,1.9rem) }
 }
 @media (prefers-reduced-motion:reduce){
   *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;
      scroll-behavior:auto !important }
-  .reveal{ opacity:1; transform:none } .tray{ opacity:1; transform:none }
+  .reveal{ opacity:1; transform:none } .inside{ opacity:1 }
 }
 `;
 }

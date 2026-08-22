@@ -30,7 +30,7 @@ const ledger = Ledger.fromJSON(JSON.parse(fs.readFileSync(path.join(SHARED, 'led
 
 const premise: PremiseDraft = {
   name: 'Carry-On',
-  logline: 'Everything she moved between three countries, packed in one case. Lift the lid.',
+  logline: 'Everything she moved between three countries, packed in one case.',
   topology: 'spatial',
   // The ground is the loud hue here; the case is black lacquer on top of it.
   // Cobalt is not decoration: it is the blue of the Luanda towers on the Way We
@@ -39,10 +39,10 @@ const premise: PremiseDraft = {
   // The other half of the Angolan flag, and the diagonal band on Sip Cuca.
   accent: '#FFDD33',
   thresholdGesture: 'hold',
-  thresholdLabel: 'LIFT THE LID',
+  thresholdLabel: 'CHOOSE YOUR TAG',
   thresholdReward: 'EVERYTHING SHE CARRIES',
   lexicon: {
-    enter: 'LIFT THE LID',
+    enter: 'CHOOSE YOUR TAG',
     catalogue: "WHAT'S PACKED",
     story: 'DECLARED',
     proof: 'WHAT IT WEIGHS',
@@ -67,35 +67,38 @@ const world = {
   // billed as a trilingual artist — allowed only against the sourced fact
   // 'artist.languages', never as decoration.
   registers: [
-    { code: 'en', label: 'EN', evidenceId: 'artist.languages', lexicon: {}, logline: premise.logline, story: [] },
+    { code: 'en', label: 'EN', evidenceId: 'artist.languages', lexicon: {}, logline: premise.logline, story: [],
+      prompt: '<b>CHOOSE YOUR TAG</b> — IT OPENS THE CASE' },
     {
       code: 'pt', label: 'PT', evidenceId: 'artist.languages',
       logline: 'Tudo o que ela levou entre três países, numa só mala. Levanta a tampa.',
       mirrorCaption: 'Lisboa · Toronto · Luanda',
+      prompt: '<b>ESCOLHE A TUA ETIQUETA</b> — ABRE A MALA',
       lexicon: {
-        enter: 'LEVANTA A TAMPA', catalogue: 'O QUE VAI DENTRO', story: 'DECLARADO',
+        enter: 'ABRE A MALA', catalogue: 'O QUE VAI DENTRO', story: 'DECLARADO',
         proof: 'QUANTO PESA', contact: 'QUEM PERGUNTA', latest: 'ÚLTIMO A ENTRAR',
         unit: 'PEÇA', index: 'O MANIFESTO',
       },
       story: [
         'Nasceu em Lisboa. Chegou a Toronto aos seis anos sem falar inglês — "és negra, como é que não falas inglês?" é como ela se lembra da pergunta. Hoje faz rap em três línguas.',
         'Os comentários dos vídeos dela estão em português e trazem a bandeira de Angola. O mapa de streaming diz 43% Canadá, 26% Estados Unidos, e Angola em lado nenhum. São dois públicos diferentes a ler a mesma artista.',
-        'Está tudo aqui dentro. Levanta a tampa.',
+        'Está tudo aqui dentro.',
       ],
     },
     {
       code: 'es', label: 'ES', evidenceId: 'artist.languages',
       logline: 'Todo lo que se llevó entre tres países, en una sola maleta. Levanta la tapa.',
       mirrorCaption: 'Lisboa · Toronto · Luanda',
+      prompt: '<b>ELIGE TU ETIQUETA</b> — ABRE LA MALETA',
       lexicon: {
-        enter: 'LEVANTA LA TAPA', catalogue: 'LO QUE LLEVA', story: 'DECLARADO',
+        enter: 'ABRE LA MALETA', catalogue: 'LO QUE LLEVA', story: 'DECLARADO',
         proof: 'CUÁNTO PESA', contact: 'QUIÉN PREGUNTA', latest: 'LO ÚLTIMO EN ENTRAR',
         unit: 'PIEZA', index: 'EL MANIFIESTO',
       },
       story: [
         'Nació en Lisboa. Llegó a Toronto a los seis años sin hablar inglés — "eres negra, ¿cómo es que no hablas inglés?" es como recuerda la pregunta. Hoy hace rap en tres idiomas.',
         'Los comentarios de sus vídeos están en portugués y llevan la bandera de Angola. El mapa de streaming dice 43% Canadá, 26% Estados Unidos, y Angola en ninguna parte. Son dos públicos distintos leyendo a la misma artista.',
-        'Está todo aquí dentro. Levanta la tapa.',
+        'Está todo aquí dentro.',
       ],
     },
   ],
@@ -118,12 +121,12 @@ const units: Unit[] = [
 ];
 
 const shell: CaseShell = {
-  material: 'lacquer',
+  material: 'aluminium',
   // Three cities, each one a fact in the ledger. No stamp for a place she has
   // not actually been — that is the whole discipline, applied to a sticker.
   stamps: [
     { text: 'LISBOA', sub: 'PT · 1994', rotate: -7, factId: 'artist.origin' },
-    { text: 'TORONTO', sub: 'CA · ARRIVED AT SIX', rotate: 4, factId: 'artist.base' },
+    { text: 'TORONTO', sub: 'CA · AT SIX', rotate: 4, factId: 'artist.base' },
     { text: 'LUANDA', sub: 'AO · KINAXIXI', rotate: -3, factId: 'press.brizzo' },
   ],
   mirror: 'assets/yt-NbJnT5j365M.jpg',
@@ -132,7 +135,8 @@ const shell: CaseShell = {
     { label: 'SECOND TRAY · WHAT SHE BROUGHT BACK', from: 4, to: 7 },
     { label: 'BOTTOM · KEPT', from: 7, to: 10 },
   ],
-  engraving: 'RAW®',
+  engraving: 'RAW® · SHORTIIE RAW',
+  packed: 4,
 };
 
 const content: SiteContent = {
@@ -145,7 +149,7 @@ const content: SiteContent = {
   story: [
     'Born in Lisbon. Landed in Toronto at six speaking no English — "You\'re black, how do you not speak English?" is how she remembers being asked. She raps in three languages now.',
     'The comments under her videos are in Portuguese and flagged Angola. The streaming map says 43% Canada, 26% United States, and no Angola at all. Those are two different audiences reading the same artist.',
-    'It is all in here. Lift the lid.',
+    'It is all packed in here.',
   ],
   rail: {
     endpoint: 'https://formsubmit.co/ajax/bookingshortiieraw@gmail.com',
