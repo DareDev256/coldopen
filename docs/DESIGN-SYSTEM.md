@@ -134,6 +134,54 @@ mandatory, and at least four of the remaining five must be present.** A world
 that cannot name itself is a layout, and a world you do not cross into is a
 page. Everything else is a choice.
 
+## Rule 8 — look at the work, do not read about it
+
+Two cases, both the same shape.
+
+**Street Bud.** A throwaway guess, buried mid-sentence and maximally hedged:
+*"his chain's a street light no or ? or idk just a thought."* Checking the music
+videos frame by frame found the pendant motion-blurred in every frame it
+appeared, so the answer came back "cannot confirm." Wrong. A later sweep of his
+Instagram surfaced it at once — a repost card reading *"THE DAY QUAVO PULLED UP
+ON STREET BUD WITH A NEW ICED OUT STREET LIGHT"* — and he signs his own posts
+with the traffic-light emoji. It became the endcap of the site.
+
+Two lessons, and the second is the bigger one: *"I cannot confirm it from THIS
+source"* is not *"it is false"*, and **the picture held a premise that no
+amount of reading would have produced.**
+
+**Shortiie Raw.** Reading her bios produces "Toronto rapper". Looking at her
+covers produces two irreconcilable visual eras — anime illustration 2018–2021,
+Angola photography 2023–2025 — which is the actual premise. Her Spotify bio, for
+the record, says she fled war in *"Angola, South Africa"*, which is geographic
+nonsense; it is machine-written filler, and a premise built on it would inherit
+the nonsense.
+
+**Text tells you what they say. Images tell you what they are.** A premise
+generated from bios will be the median premise, because bios are written to be
+unobjectionable.
+
+## Rule 9 — sample the palette out of the work, never pick it
+
+James on the Ninjora wiki: *"what about it feels AI-sloppy, maybe it's cause
+it's lacking a colour theme."* The diagnosis was right; the fix was not a nicer
+colour, it was to take the colour from the subject.
+
+`sampleHues()` buckets an artist's own artwork by hue at usable saturation,
+discarding neutrals so that a mostly-black cover does not return black as their
+colour. Run across Shortiie Raw's five covers and stills it returns
+**`#E5CA0A` at 80% of usable pixels on the *Sip Cuca* cover** — the Cuca-bottle
+yellow.
+
+That is the same accent the site had already been given by hand, arrived at by
+reasoning about the Angolan flag and her cover art. The sampler found it from
+her pixels, with no taste involved. That agreement is the argument: a palette
+chosen by taste is chosen from the median, and a palette pulled out of the
+artist's own work can only look like them.
+
+`proposePalette()` will not hand back a pair the build would later refuse — it
+checks the cream ban and the 3:1 contrast floor before offering anything.
+
 ---
 
 ## What the engine enforces, and where

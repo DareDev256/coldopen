@@ -124,7 +124,30 @@ machine-generated one.
 comparable saturation. The eye cannot separate `#FF4444` from `#FF1744`, so the
 extras buy nothing and cost the only thing that would have read: commitment.
 
-### 4. A template that still says REPLACE ME does not build
+### 4. Look at the work, do not read about it
+
+An artist's bio is written to be unobjectionable, so a premise built from bios
+will be the median premise. Their pictures are not.
+
+The case that taught this: a hedged guess that a rapper's chain was shaped like
+a streetlight. Frame-by-frame checks of his videos found the pendant
+motion-blurred every time and the answer came back "cannot confirm" — wrong. His
+Instagram had it outright: *"THE DAY QUAVO PULLED UP ON STREET BUD WITH A NEW
+ICED OUT STREET LIGHT"*, and he signs his posts with the traffic-light emoji. It
+became the endcap of the site.
+
+So `vision.ts` gathers the artist's own covers and video frames and asks a
+vision model for **recurring objects**, eras, and what is actually on them —
+with `edgy`, `gritty`, `vibrant`, `dynamic` and `aesthetic` banned, because those
+are the words a model uses when it has looked at nothing in particular.
+
+It also **samples the palette out of the work rather than picking one**. Run
+across Shortiie Raw's covers, `sampleHues()` returns `#E5CA0A` at 80% of usable
+pixels — the Cuca-bottle yellow, which is the same accent the site had already
+been given by hand. The sampler found it from her pixels, with no taste
+involved.
+
+### 5. A template that still says REPLACE ME does not build
 
 The starter world shipped with placeholders in twelve slots and built clean,
 because no rule was looking. A green build on an unfilled template teaches
