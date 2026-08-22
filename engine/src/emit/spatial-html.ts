@@ -53,7 +53,6 @@ export function emitSpatialHTML(w: World, c: SiteContent, l: Ledger, shell: Case
   const backFrom = shell.trays.length > 1
     ? (shell.trays[shell.trays.length - 1]?.from ?? c.units.length)
     : c.units.length;
-  const packed = shell.packed ?? backFrom;
 
   return `<!doctype html>
 <html lang="en">

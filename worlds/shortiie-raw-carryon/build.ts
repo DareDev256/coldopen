@@ -107,20 +107,25 @@ const world = {
   ],
 };
 
-/* Ordered by what the case is actually holding, heaviest first. */
+/* The middle carries what is current, in the order James set on 2026-08-22:
+   Drip through Slaughter, with Dess closing the bottom row. The right lid takes
+   Fire, Peace, Cartier Tints. Everything else rides in the handbag. */
 const units: Unit[] = [
+  // MIDDLE — the compartment, 2 across, 4 rows
   { title: 'Drip', sub: 'ft. Molly Brazy · 202,424', href: 'https://www.youtube.com/watch?v=EmrpNsyVtDQ', image: 'assets/yt-EmrpNsyVtDQ.jpg' },
-  { title: 'Strawberry Go-Kart', sub: '2018 · 31,890', href: 'https://www.youtube.com/watch?v=iiYmh9-D_14', image: 'assets/yt-iiYmh9-D_14.jpg' },
   { title: "Don't Act New", sub: '2021 · 14,609', href: 'https://www.youtube.com/watch?v=HueUBufXMbs', image: 'assets/yt-HueUBufXMbs.jpg' },
   { title: 'Way We Move', sub: 'ft. Ingomblock · 11,985', href: 'https://www.youtube.com/watch?v=Xedv19NEX-E', image: 'assets/yt-Xedv19NEX-E.jpg' },
+  { title: 'Sip Cuca', sub: '2025 · 7,463', href: 'https://www.youtube.com/watch?v=NbJnT5j365M', image: 'assets/yt-NbJnT5j365M.jpg' },
 
   { title: 'Angola Kinaxixi Freestyle', sub: 'reprod. AK Marv · 8,676', href: 'https://www.youtube.com/watch?v=X8zj9clGQO4', image: 'assets/yt-X8zj9clGQO4.jpg' },
-  { title: 'Sip Cuca', sub: '2025 · 7,463', href: 'https://www.youtube.com/watch?v=NbJnT5j365M', image: 'assets/yt-NbJnT5j365M.jpg' },
-  { title: 'Fire', sub: 'In studio · 8,024', href: 'https://www.youtube.com/watch?v=82_xVuYR45c', image: 'assets/yt-82_xVuYR45c.jpg' },
+  { title: 'Panda Freestyle', sub: 'on 6ixBuzz Premieres · 18,819', href: 'https://www.youtube.com/watch?v=d7DqCGOxxpI', image: 'assets/clips/d7DqCGOxxpI.jpg' },
+  { title: 'Slaughter', sub: 'ft. Jason Packs · 2013 · 24,431', href: 'https://www.youtube.com/watch?v=ii_AKDGHAFA', image: 'assets/clips/ii_AKDGHAFA.jpg' },
+  { title: 'Dess', sub: '2025 · 2,572', href: 'https://www.youtube.com/watch?v=YfPCjexMP18', image: 'assets/clips/YfPCjexMP18.jpg' },
 
+  // RIGHT LID — from index 8
+  { title: 'Fire', sub: 'In studio · 8,024', href: 'https://www.youtube.com/watch?v=82_xVuYR45c', image: 'assets/yt-82_xVuYR45c.jpg' },
   { title: 'Peace', sub: '2023 · 11,212', href: 'https://www.youtube.com/watch?v=z2BL7wgPsaI', image: 'assets/yt-z2BL7wgPsaI.jpg' },
   { title: 'Cartier Tints', sub: '2024 · 6,367', href: 'https://www.youtube.com/watch?v=9hRUzEGfW7o', image: 'assets/yt-9hRUzEGfW7o.jpg' },
-  { title: 'Sexy No Jutsu', sub: 'prod. Cash Money AP · 5,736', href: 'https://www.youtube.com/watch?v=WLnquJAMnt0', image: 'assets/yt-WLnquJAMnt0.jpg' },
 ];
 
 const shell: CaseShell = {
@@ -135,8 +140,8 @@ const shell: CaseShell = {
   mirror: 'assets/yt-NbJnT5j365M.jpg',
   trays: [
     { label: 'TOP TRAY · HEAVIEST', from: 0, to: 4 },
-    { label: 'SECOND TRAY · WHAT SHE BROUGHT BACK', from: 4, to: 7 },
-    { label: 'BOTTOM · KEPT', from: 7, to: 10 },
+    { label: 'SECOND TRAY · WHAT SHE BROUGHT BACK', from: 4, to: 8 },
+    { label: 'BOTTOM · KEPT', from: 8, to: 11 },
   ],
   engraving: 'RAW® · SHORTIIE RAW',
   packed: 4,
@@ -229,10 +234,9 @@ const feed: FeedPost[] = [
    other people's channels, and the audio-only releases. Verified present on
    YouTube 2026-08-21; view counts are from that read. */
 const deepCuts = [
-  { title: 'Slaughter', sub: 'ft. Jason Packs · 2013 · 24,431', href: 'https://www.youtube.com/watch?v=ii_AKDGHAFA', image: 'assets/clips/ii_AKDGHAFA.jpg' },
-  { title: 'Panda Freestyle', sub: 'on 6ixBuzz Premieres · 18,819', href: 'https://www.youtube.com/watch?v=d7DqCGOxxpI', image: 'assets/clips/d7DqCGOxxpI.jpg' },
+  { title: 'Strawberry Go-Kart', sub: '2018 · 31,890', href: 'https://www.youtube.com/watch?v=iiYmh9-D_14', image: 'assets/yt-iiYmh9-D_14.jpg' },
   { title: 'Knockout', sub: 'on HAM Toronto · 2014 · 9,859', href: 'https://www.youtube.com/watch?v=3af1plSKe6M', image: 'assets/clips/3af1plSKe6M.jpg' },
-  { title: 'Dess', sub: '2025 · 2,572', href: 'https://www.youtube.com/watch?v=YfPCjexMP18', image: 'assets/clips/YfPCjexMP18.jpg' },
+  { title: 'Sexy No Jutsu', sub: 'prod. Cash Money AP · 5,736', href: 'https://www.youtube.com/watch?v=WLnquJAMnt0', image: 'assets/yt-WLnquJAMnt0.jpg' },
   { title: 'Drip', sub: 'audio · 30,824', href: 'https://www.youtube.com/watch?v=F5K3XSy-iMA', image: 'assets/clips/F5K3XSy-iMA.jpg' },
   { title: 'A1 Perico', sub: 'audio · 4,914', href: 'https://www.youtube.com/watch?v=ZXgPDKefSkU', image: 'assets/clips/ZXgPDKefSkU.jpg' },
   { title: 'Time or Day', sub: 'audio · 4,127', href: 'https://www.youtube.com/watch?v=L0nwhXZnF5g', image: 'assets/clips/L0nwhXZnF5g.jpg' },

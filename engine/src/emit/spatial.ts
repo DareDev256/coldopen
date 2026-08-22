@@ -309,9 +309,10 @@ body.is-open #ground::after{ background:
   color:${alpha('#ffffff', 0.78)}; line-height:1.7 }
 
 /* right: the packed items under elastic straps */
-/* The middle carries the current catalogue — seven items, not four — so it is
-   a grid rather than a column. A column of seven in a case-height compartment
-   gives each one a 20px sliver. */
+/* The middle carries the current catalogue — eight items, not four — so it is
+   a grid rather than a column. A column of eight in a case-height compartment
+   gives each one a 20px sliver. An even count also fills the last row: an odd
+   one leaves a ragged empty cell beside the final tile. */
 .packed{ position:relative; flex:1; display:grid; grid-template-columns:1fr 1fr;
   gap:clamp(.2rem,.7vw,.36rem); min-height:0; align-content:stretch }
 .packed .item{ min-height:0 }
