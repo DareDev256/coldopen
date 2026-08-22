@@ -370,8 +370,8 @@ ${(x.feed?.length ?? 0) > 0 ? `<div id="panel-feed" class="panel" aria-hidden="t
     <p>Her most-talked-about posts. These are live Instagram embeds — the pictures are served by Instagram and stay attributed to her, so a post she takes down disappears from here the same day.</p>
     <div class="feed">
 ${(x.feed ?? []).map(f => `      <figure class="feed-i">
-        <iframe src="https://www.instagram.com/p/${esc(f.id)}/embed/captioned/" loading="lazy" scrolling="no" title="${esc(f.caption || f.id)}"></iframe>
-        <figcaption><b>${esc(f.comments)}</b> comments · <a href="https://www.instagram.com/p/${esc(f.id)}/" target="_blank" rel="noopener">open on Instagram ↗</a></figcaption>
+        <iframe src="https://www.instagram.com/${f.kind === 'reel' ? 'reel' : 'p'}/${esc(f.id)}/embed/captioned/" loading="lazy" scrolling="no" title="${esc(f.caption || f.id)}"></iframe>
+        <figcaption><b>${esc(f.comments)}</b> comments · <a href="https://www.instagram.com/${f.kind === 'reel' ? 'reel' : 'p'}/${esc(f.id)}/" target="_blank" rel="noopener">open on Instagram ↗</a></figcaption>
       </figure>`).join('\n')}
     </div>
     <p class="alt">More at <a href="https://www.instagram.com/${esc(x.igHandle ?? '')}/" target="_blank" rel="noopener">@${esc(x.igHandle ?? '')}</a></p>
