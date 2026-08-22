@@ -585,7 +585,7 @@ host.addEventListener('click', () => {
  *   0.00 - 0.62  the latches release and the halves swing wide. Camera holds.
  *   0.45 - 1.00  the camera travels through the gap into the room.
  * Scroll only turns your head, and only once you are in. */
-const ENTRY_MS = 3200;
+const ENTRY_MS = 3800;
 let entry = 0;               // 0 outside, 1 standing inside
 let entryDir = 0;            // +1 going in, -1 backing out
 let opened = false, openT = 0, spin = 0, spinTarget = 0;
@@ -665,8 +665,8 @@ function tick() {
 
   /* Two beats, deliberately overlapping so it reads as one move: the shell
      opens first, the camera follows it in. */
-  const shell = easeIO(clamp01(entry / 0.62));
-  const travel = easeIO(clamp01((entry - 0.45) / 0.55));
+  const shell = easeIO(clamp01(entry / 0.5));
+  const travel = easeIO(clamp01((entry - 0.5) / 0.5));
   const e = shell;
 
   /* ENTERING.
@@ -677,11 +677,12 @@ function tick() {
   halfL.rotation.y = e * 2.5;
   halfR.rotation.y = -e * 2.5;
   handle.visible = e < 0.4;
-  /* The shell only rushes past once the camera is actually moving; scaling it
-     during the swing made the case lunge at the viewer before it had opened. */
-  exterior.visible = travel < 0.94;
-  exterior.scale.setScalar(1 + travel * 6.5);
-  exterior.position.z = travel * 12.0;
+  /* The shell holds its size and place through the whole swing, so the opening
+     plays against her footage rather than against a grey interior. It only
+     rushes past once the camera is genuinely travelling. */
+  exterior.visible = travel < 0.9;
+  exterior.scale.setScalar(1 + travel * 7.0);
+  exterior.position.z = travel * 13.0;
 
   /* Camera: from outside the case, through the gap, to standing in the room. */
   camera.position.z = 13.2 - travel * (13.2 - 2.05);
@@ -695,7 +696,13 @@ function tick() {
 
   /* The room only exists once you are through the threshold, so its lining
      never shows through the closed shell. */
-  room.visible = entry > 0.12;
+  /* THE ROOM DOES NOT EXIST UNTIL YOU ARE IN IT.
+     It was appearing at entry 0.12 while the camera did not start moving until
+     0.45, so for a third of the animation you stood OUTSIDE a grey box with
+     the case shrunk to a sliver inside it. Its walls are BackSide, so from
+     outside you see straight through the near wall onto the blank back of the
+     far one — an empty room, which is what it looked like. */
+  room.visible = travel > 0.015;
 
   /* Only the video items nearest the camera decode. Ten 1080p streams stall a
      phone long before they run out of memory, and a wall that stutters is
@@ -784,6 +791,7 @@ window.__dbg = () => {
     yawDeg: +(camera.rotation.y * 180 / Math.PI).toFixed(1),
     fwd: [+f.x.toFixed(2), +f.y.toFixed(2), +f.z.toFixed(2)],
     roomVisible: room.visible, extVisible: exterior.visible,
+    shell: +easeIO(clamp01(entry / 0.5)).toFixed(2), travel: +easeIO(clamp01((entry - 0.5) / 0.5)).toFixed(2),
     onScreen: seen.filter((s) => s.onScreen).length, total: seen.length,
     sample: seen.slice(0, 6),
   };
