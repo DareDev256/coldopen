@@ -23,6 +23,7 @@ worlds**, and the design falls out of the name:
 | 100bandplan.com | **Mission File** | self-drawing blueprint, `DWG 100BP-A01`, redaction bars |
 | savv4x.com | **Problem Child** | red chromatic wordmark, ghost background type |
 | syreneffect.com | **SyrenEffect TV** | `NOW STREAMING`, a live video panel, `ENTER` |
+| officialstreetbud.com | **The Streetlight** | asphalt ground, `--filament: #ffd9a0`, a signal that goes off |
 | **shortiieraw.com** | **Carry-On** | a ribbed cabin case that opens — paperwork in one lid, the back catalogue in the other, a passport that changes country with the language |
 
 The last one was built **by this engine**. Everything above it was built by hand,
@@ -129,12 +130,18 @@ extras buy nothing and cost the only thing that would have read: commitment.
 An artist's bio is written to be unobjectionable, so a premise built from bios
 will be the median premise. Their pictures are not.
 
-The case that taught this: a hedged guess that a rapper's chain was shaped like
-a streetlight. Frame-by-frame checks of his videos found the pendant
-motion-blurred every time and the answer came back "cannot confirm" — wrong. His
-Instagram had it outright: *"THE DAY QUAVO PULLED UP ON STREET BUD WITH A NEW
-ICED OUT STREET LIGHT"*, and he signs his posts with the traffic-light emoji. It
-became the endcap of the site.
+The case that taught this is in the table above. A hedged guess that Street
+Bud's chain was shaped like a streetlight. Frame-by-frame checks of his videos
+found the pendant motion-blurred every time and the answer came back "cannot
+confirm" — wrong. His Instagram had it outright: *"THE DAY QUAVO PULLED UP ON
+STREET BUD WITH A NEW ICED OUT STREET LIGHT"*, and he signs his own posts with
+the traffic-light emoji.
+
+That one look did not just add a detail. **It became the whole world.**
+officialstreetbud.com is built on `--asphalt`, `--filament: #ffd9a0` — the warm
+glow of a sodium lamp — and `--sig-off`, the colour of a signal that is not lit.
+A premise written from his bio would have produced "Toronto rapper" and a dark
+editorial page.
 
 So `vision.ts` gathers the artist's own covers and video frames and asks a
 vision model for **recurring objects**, eras, and what is actually on them —

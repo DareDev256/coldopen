@@ -147,8 +147,13 @@ ON STREET BUD WITH A NEW ICED OUT STREET LIGHT"* — and he signs his own posts
 with the traffic-light emoji. It became the endcap of the site.
 
 Two lessons, and the second is the bigger one: *"I cannot confirm it from THIS
-source"* is not *"it is false"*, and **the picture held a premise that no
-amount of reading would have produced.**
+source"* is not *"it is false"*, and **the picture held a premise that no amount
+of reading would have produced.**
+
+That look became the entire site. officialstreetbud.com declares `--asphalt`,
+`--filament: #ffd9a0` — the warm glow of a sodium lamp — and `--sig-off`, the
+colour of an unlit signal. Named premise: **The Streetlight.** Written from his
+bio it would have been "Toronto rapper" over a dark editorial page.
 
 **Shortiie Raw.** Reading her bios produces "Toronto rapper". Looking at her
 covers produces two irreconcilable visual eras — anime illustration 2018–2021,
