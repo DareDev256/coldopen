@@ -105,6 +105,49 @@ export function emitJS(w: World): string {
     document.addEventListener('visibilitychange', function () { if (document.hidden && sOn) audio.pause(); else if (!document.hidden && sOn) audio.play().catch(function () {}); });
   }
 
+  /* ---------- 2b · THE DIAL ----------
+     Swaps the page's register. Only prose and section names move; every
+     NUMBER stays exactly as it was, because a figure does not change
+     language and re-rendering one is how a translated site starts lying. */
+  var regEl = document.getElementById('registers');
+  if (regEl) {
+    var REG = JSON.parse(regEl.textContent || '{}');
+    var base = {};
+    document.querySelectorAll('[data-t]').forEach(function (el) { base[el.getAttribute('data-t')] = el.innerHTML; });
+    var baseCode = document.querySelector('.dial-b.is-on') && document.querySelector('.dial-b.is-on').getAttribute('data-reg');
+
+    function setRegister(code) {
+      var r = REG[code];
+      document.querySelectorAll('.dial-b').forEach(function (b) {
+        var on = b.getAttribute('data-reg') === code;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      document.documentElement.lang = code;
+      document.querySelectorAll('[data-t]').forEach(function (el) {
+        var k = el.getAttribute('data-t');
+        if (code === baseCode || !r) { el.innerHTML = base[k]; return; }
+        if (k === 'logline' && r.logline) el.textContent = r.logline;
+        else if (k === 'story' && r.story) el.innerHTML = r.story.map(function (p) { return '<p>' + p.replace(/[&<>]/g, '') + '</p>'; }).join('');
+        else if (k.indexOf('lex.') === 0 && r.lexicon && r.lexicon[k.slice(4)]) el.textContent = r.lexicon[k.slice(4)];
+        else el.innerHTML = base[k];
+      });
+      try { localStorage.setItem('co-register', code); } catch (e) {}
+    }
+    document.querySelectorAll('.dial-b').forEach(function (b) {
+      b.addEventListener('click', function () { setRegister(b.getAttribute('data-reg')); });
+    });
+    try {
+      var saved = localStorage.getItem('co-register');
+      if (saved && REG[saved]) setRegister(saved);
+      else {
+        // meet the visitor in their own language if we speak it
+        var nav = (navigator.language || '').slice(0, 2);
+        if (REG[nav]) setRegister(nav);
+      }
+    } catch (e) {}
+  }
+
   /* ---------- 3 · REVEALS + LIVE-NUMBER COUNT-UP ----------
      The count-up animates TO the value already in the DOM. If JS dies the
      real number is still printed — the animation is decoration over truth,

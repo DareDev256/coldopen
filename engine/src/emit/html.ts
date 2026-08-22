@@ -41,7 +41,7 @@ export interface SiteContent {
   readonly jsonLd?: Record<string, unknown>;
 }
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 function figure(l: Ledger, id: string): string {
   const f = l.get(id);
@@ -59,7 +59,7 @@ function figure(l: Ledger, id: string): string {
     // The move James invented: the site admits it is holding something back
     // rather than inventing a number to fill the slot.
     return `      <div class="fig sealed" title="${esc(s.reason)}">
-        <b class="mono">████████</b>
+        <b><span class="bar" aria-hidden="true"></span><span class="sr-only">withheld</span></b>
         <span class="fl">${esc(s.label)} · UNVERIFIED</span>
       </div>`;
   }
@@ -67,7 +67,8 @@ function figure(l: Ledger, id: string): string {
 }
 
 export function emitHTML(w: World, c: SiteContent, l: Ledger): string {
-  const g = w.type.display.google + '&family=' + w.type.mono.google;
+  const families = [w.type.display.google, w.type.text.google, w.type.mono.google];
+  const g = [...new Set(families)].join('&family=');
   const lex = w.lexicon;
   const groundTag = w.ground.kind === 'video'
     ? `<video class="co-ground" src="${esc(w.ground.src)}" ${w.ground.poster ? `poster="${esc(w.ground.poster)}"` : ''} muted playsinline preload="auto" autoplay loop></video>`
@@ -115,7 +116,7 @@ ${w.ground.kind === 'video' ? `<link rel="preload" href="${esc(w.ground.src)}" a
   <div class="co-body">
     <p class="co-premise">${esc(w.name)}</p>
     <h1 class="co-word">${esc(w.artist)}</h1>
-    <p class="co-log mono">${esc(w.logline)}</p>
+    <p class="co-log mono" data-t="logline">${esc(w.logline)}</p>
 
     <div class="co-gate">
       <button class="co-cta mono" id="crossBtn" type="button"
@@ -143,6 +144,16 @@ ${w.ground.treatment.includes('grain') ? '<div class="grain" aria-hidden="true">
 <div class="hud hud-tr mono" id="hudReadout">${esc(w.chrome.docCode)}</div>
 <div class="hud hud-bl mono">${esc(w.chrome.stamps.join(' · '))}</div>
 
+${(w.registers?.length ?? 0) > 0 ? `<!-- the dial. Two audiences read this page in two languages; picking one
+     would have picked which half of the artist to erase. -->
+<div class="dial mono" role="group" aria-label="Language">
+  <button class="dial-b is-on" data-reg="${esc(w.registers![0].code)}" aria-pressed="true">${esc(w.registers![0].label)}</button>
+${w.registers!.slice(1).map(r => `  <button class="dial-b" data-reg="${esc(r.code)}" aria-pressed="false">${esc(r.label)}</button>`).join('\n')}
+</div>
+<script id="registers" type="application/json">${JSON.stringify(
+  Object.fromEntries((w.registers ?? []).map(r => [r.code, { lexicon: r.lexicon, logline: r.logline, story: r.story }]))
+)}</script>` : ''}
+
 ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-label="Toggle ${esc(w.sound.label)}">
   <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
   <span class="s-label">${esc(w.sound.label)}</span>
@@ -153,9 +164,9 @@ ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-
 
   <!-- ${lex.proof} -->
   <section id="proof" class="reveal">
-    <p class="slug">${esc(lex.proof)}</p>
+    <p class="slug" data-t="lex.proof">${esc(lex.proof)}</p>
     <h2>${esc(w.name)}</h2>
-    ${c.story.map(p => `<p>${esc(p)}</p>`).join('\n    ')}
+    <div data-t="story">${c.story.map(p => `<p>${esc(p)}</p>`).join('\n      ')}</div>
     <div class="figures">
 ${c.figures.map(id => figure(l, id)).filter(Boolean).join('\n')}
     </div>
@@ -163,7 +174,7 @@ ${c.figures.map(id => figure(l, id)).filter(Boolean).join('\n')}
 
   ${c.climax ? `<!-- the climax object — the one thing this is built around -->
   <section id="climax" class="reveal">
-    <p class="slug">${esc(lex.latest)}</p>
+    <p class="slug" data-t="lex.latest">${esc(lex.latest)}</p>
     <div class="climax">
       <span class="stamp mono">${esc(c.climax.stamp)}</span>
       <h3>${esc(c.climax.title)}</h3>
@@ -174,8 +185,8 @@ ${c.figures.map(id => figure(l, id)).filter(Boolean).join('\n')}
 
   <!-- ${lex.catalogue} -->
   <section id="catalogue" class="reveal">
-    <p class="slug">${esc(lex.catalogue)}</p>
-    <h2>${esc(c.units.length)} ${esc(lex.unit)}${c.units.length === 1 ? '' : 's'}</h2>
+    <p class="slug" data-t="lex.catalogue">${esc(lex.catalogue)}</p>
+    <h2>${c.units.length} ${esc(lex.unit)}${c.units.length === 1 ? '' : 's'}</h2>
     <div class="rack">
 ${c.units.map((u, i) => `      <a class="unit" href="${esc(u.href)}" target="_blank" rel="noopener">
         <span class="u-corner" aria-hidden="true"></span>
@@ -191,9 +202,9 @@ ${c.units.map((u, i) => `      <a class="unit" href="${esc(u.href)}" target="_bl
 
   <!-- ${lex.contact} — the rail. A real endpoint, not a mailto. -->
   <section id="rail" class="reveal">
-    <p class="slug">${esc(lex.contact)}</p>
+    <p class="slug" data-t="lex.contact">${esc(lex.contact)}</p>
     <div class="rail">
-      <h2>${esc(lex.contact)}</h2>
+      <h2 data-t="lex.contact">${esc(lex.contact)}</h2>
       <form id="railForm" method="POST" action="${esc(c.rail.endpoint)}">
 ${c.rail.fields.map(f => `        <div>
           <label for="f-${esc(f.name)}">${esc(f.label)}</label>

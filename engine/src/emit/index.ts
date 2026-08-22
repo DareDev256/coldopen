@@ -41,9 +41,11 @@ export function emitVercelJson(w: World): string {
 }
 
 export class BuildRefused extends Error {
-  constructor(public readonly audit: WorldAudit) {
+  readonly audit: WorldAudit;
+  constructor(audit: WorldAudit) {
     super(`COLD OPEN refused to build:\n  - ${audit.problems.join('\n  - ')}`);
     this.name = 'BuildRefused';
+    this.audit = audit;
   }
 }
 

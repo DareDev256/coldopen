@@ -21,25 +21,31 @@ import { hsl } from './world.ts';
 const TYPE_BY_TOPOLOGY: Record<PremiseDraft['topology'], TypePair> = {
   dossier: {
     display: { family: 'Archivo', weights: [700, 800, 900], google: 'Archivo:wght@700;800;900' },
+    text: { family: 'Archivo', weights: [400, 500], google: 'Archivo:wght@400;500' },
     mono: { family: 'Space Mono', weights: [400, 700], google: 'Space+Mono:wght@400;700' },
   },
   spatial: {
     display: { family: 'Bebas Neue', weights: [400], google: 'Bebas+Neue' },
+    text: { family: 'Inter', weights: [400, 600], google: 'Inter:wght@400;600' },
     mono: { family: 'JetBrains Mono', weights: [400, 700], google: 'JetBrains+Mono:wght@400;700' },
   },
   broadcast: {
     display: { family: 'Anton', weights: [400], google: 'Anton' },
+    // Anton is a poster face. Body copy needs a companion that can hold a
+    // paragraph, and Barlow Condensed keeps the broadcast register.
+    text: { family: 'Barlow', weights: [400, 600], google: 'Barlow:wght@400;600' },
     mono: { family: 'Share Tech Mono', weights: [400], google: 'Share+Tech+Mono' },
   },
   plate: {
     display: { family: 'Instrument Serif', weights: [400], google: 'Instrument+Serif:ital@0;1' },
+    text: { family: 'Instrument Sans', weights: [400, 600], google: 'Instrument+Sans:wght@400;600' },
     mono: { family: 'IBM Plex Mono', weights: [400, 600], google: 'IBM+Plex+Mono:wght@400;600' },
   },
   ledger: {
-    family: undefined as never,
-    display: { family: 'Archivo Expanded', weights: [700, 900], google: 'Archivo:wdth@125&family=Archivo:wght@700;900' },
+    display: { family: 'Archivo', weights: [700, 900], google: 'Archivo:wght@700;900' },
+    text: { family: 'Archivo', weights: [400, 500], google: 'Archivo:wght@400;500' },
     mono: { family: 'IBM Plex Mono', weights: [400, 600], google: 'IBM+Plex+Mono:wght@400;600' },
-  } as unknown as TypePair,
+  },
 };
 
 /** The reward copy is the world's own promise, in the world's own register. */

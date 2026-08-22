@@ -24,7 +24,7 @@ export interface PremiseDraft {
   readonly fromAnswers: readonly string[];
 }
 
-import { hsl, assertGroundAllowed, assertAccentSaturated } from './world.ts';
+import { hsl, assertGroundAllowed, assertOneHue, contrastRatio, liftAccentForGround } from './world.ts';
 
 function hueDistance(a: string, b: string): number {
   const d = Math.abs(hsl(a).h - hsl(b).h);
@@ -77,7 +77,16 @@ export function assertDivergent(drafts: readonly PremiseDraft[]): DivergenceRepo
 
   for (const d of drafts) {
     try { assertGroundAllowed(d.ground); } catch (e) { problems.push(`"${d.name}": ${(e as Error).message}`); }
-    try { assertAccentSaturated(d.accent); } catch (e) { problems.push(`"${d.name}": ${(e as Error).message}`); }
+    try { assertOneHue(d.ground, d.accent); } catch (e) { problems.push(`"${d.name}": ${(e as Error).message}`); }
+    // A premise the artist can pick but the engine cannot build is a broken
+    // promise. Check legibility HERE, at choosing time, not at build time.
+    const ratio = contrastRatio(d.accent, d.ground);
+    if (ratio < 3) {
+      const lifted = liftAccentForGround(d.accent, d.ground);
+      problems.push(lifted
+        ? `"${d.name}" accent ${d.accent} on ${d.ground} is ${ratio.toFixed(2)}:1 — below 3:1. Same hue at ${lifted} clears it; use that.`
+        : `"${d.name}" accent ${d.accent} cannot reach 3:1 on ${d.ground} at any lightness — that hue does not work on that ground.`);
+    }
     if (!d.rationale?.trim() || !d.fromAnswers?.length) {
       problems.push(`"${d.name}" has no rationale tied to an interview answer — that means it came from the model, not the artist`);
     }

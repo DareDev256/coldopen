@@ -31,6 +31,7 @@ export function emitCSS(w: World): string {
   --payoff:${payoff};
   --line:${alpha(ink, 0.14)};
   --f-disp:'${w.type.display.family}', system-ui, -apple-system, sans-serif;
+  --f-text:'${w.type.text.family}', system-ui, -apple-system, sans-serif;
   --f-mono:'${w.type.mono.family}', ui-monospace, 'SF Mono', monospace;
   --hud:.62rem;
   --gut:clamp(1.1rem, 4vw, 3rem);
@@ -40,7 +41,7 @@ export function emitCSS(w: World): string {
 html{ background:var(--ground); scroll-behavior:smooth; }
 body{
   background:var(--ground); color:var(--ink);
-  font-family:var(--f-disp); overflow-x:hidden;
+  font-family:var(--f-text); overflow-x:hidden;
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   min-height:100vh;
 }
@@ -57,12 +58,14 @@ a{ color:inherit; }
 #coldopen{
   position:fixed; inset:0; z-index:100;
   background:var(--ground);
-  display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:${w.ground.copyAnchor === 'top' ? 'flex-start' : w.ground.copyAnchor === 'bottom' ? 'flex-end' : 'center'}; justify-content:center;
+  ${w.ground.copyAnchor === 'top' ? 'padding-top:clamp(3rem,9vh,7rem);' : w.ground.copyAnchor === 'bottom' ? 'padding-bottom:clamp(4rem,11vh,8rem);' : ''}
   transition:opacity .9s cubic-bezier(.16,1,.3,1), visibility .9s;
 }
 #coldopen.crossed{ opacity:0; visibility:hidden; pointer-events:none; }
 
-.co-ground{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+.co-ground{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0;
+  object-position:${w.ground.focus ?? '50% 50%'}; }
 .co-tint{ position:absolute; inset:0; z-index:1; pointer-events:none;
   background:
     radial-gradient(120% 90% at 50% 45%, transparent 30%, ${alpha(ground, 0.72)} 78%, var(--ground) 100%),
@@ -78,7 +81,11 @@ ${w.ground.treatment.includes('scanlines') ? `.co-tint::after{ content:""; posit
 .co-frame span:nth-child(3){ bottom:0; left:0; border-right:0; border-top:0; }
 .co-frame span:nth-child(4){ bottom:0; right:0; border-left:0; border-top:0; }
 
-.co-body{ position:relative; z-index:5; text-align:center; padding:0 var(--gut); display:flex; flex-direction:column; align-items:center; gap:clamp(.7rem,2vh,1.3rem); }
+.co-body{ position:relative; z-index:5; text-align:center; padding:clamp(2rem,5vh,3.5rem) var(--gut); display:flex; flex-direction:column; align-items:center; gap:clamp(.7rem,2vh,1.3rem); }
+/* Full-bleed footage is busy by definition. Without a pad behind the copy the
+   threshold text sits on whatever happens to be in frame and disappears. */
+.co-body::before{ content:""; position:absolute; inset:-6% -10%; z-index:-1; pointer-events:none;
+  background:radial-gradient(58% 62% at 50% 50%, ${alpha(ground, 0.9)} 0%, ${alpha(ground, 0.72)} 45%, transparent 78%); }
 .co-premise{ font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.42em; text-transform:uppercase; color:var(--accent); font-weight:700; }
 .co-word{
   font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
@@ -86,13 +93,14 @@ ${w.ground.treatment.includes('scanlines') ? `.co-tint::after{ content:""; posit
   color:var(--ink);
   ${lightGround ? '' : `text-shadow:0 0 clamp(30px,7vw,90px) ${alpha(accent, 0.30)};`}
 }
-.co-log{ font-family:var(--f-mono); font-size:clamp(.62rem,1.5vw,.78rem); letter-spacing:.2em; text-transform:uppercase; color:var(--muted); max-width:42ch; line-height:1.7; }
+.co-log{ font-family:var(--f-mono); font-size:clamp(.66rem,1.5vw,.8rem); letter-spacing:.18em; text-transform:uppercase;
+  color:${alpha(ink, 0.92)}; max-width:44ch; line-height:1.8; }
 
 /* the gesture itself */
 .co-gate{ margin-top:clamp(1rem,4vh,2.4rem); display:flex; flex-direction:column; align-items:center; gap:.75rem; }
 .co-cta{
-  font-family:var(--f-mono); font-size:clamp(.6rem,1.4vw,.72rem); letter-spacing:.3em; text-transform:uppercase;
-  color:var(--ink); background:none; border:1px solid var(--accent-line); cursor:pointer;
+  font-family:var(--f-mono); font-size:clamp(.62rem,1.4vw,.74rem); letter-spacing:.3em; text-transform:uppercase;
+  color:var(--ink); background:${alpha(ground, 0.55)}; backdrop-filter:blur(6px); border:1px solid var(--accent); cursor:pointer;
   padding:.95rem 1.6rem; position:relative; overflow:hidden; isolation:isolate;
   transition:color .3s, border-color .3s;
 }
@@ -100,7 +108,7 @@ ${w.ground.treatment.includes('scanlines') ? `.co-tint::after{ content:""; posit
 /* hold-to-enter fills; scroll/press just pulse */
 .co-cta .fill{ position:absolute; inset:0; z-index:-1; background:var(--accent); transform:scaleX(var(--held,0)); transform-origin:left; transition:transform .12s linear; }
 .co-cta[data-held="1"]{ color:var(--ground); }
-.co-hint{ font-family:var(--f-mono); font-size:.58rem; letter-spacing:.26em; text-transform:uppercase; color:var(--subtle); }
+.co-hint{ font-family:var(--f-mono); font-size:.62rem; letter-spacing:.26em; text-transform:uppercase; color:var(--accent); }
 .co-arrow{ font-size:1.1rem; color:var(--accent); animation:bob 2.1s ease-in-out infinite; }
 @keyframes bob{ 0%,100%{ transform:translateY(0); opacity:.55 } 50%{ transform:translateY(7px); opacity:1 } }
 
@@ -118,6 +126,8 @@ ${w.ground.treatment.includes('scanlines') ? `.co-tint::after{ content:""; posit
 .hud-tl i{ color:var(--subtle); font-style:normal; font-weight:400; }
 .hud-tr{ top:1.1rem; right:var(--gut); }
 .hud-bl{ bottom:1.1rem; left:var(--gut); }
+/* the dial owns the bottom-left, so the stamp line moves up out of its way */
+body:has(.dial) .hud-bl{ bottom:3.6rem; }
 
 /* ============ 3 · SOUND — a first-class control, not a mute toggle ======= */
 .sound{
@@ -135,6 +145,15 @@ ${w.ground.treatment.includes('scanlines') ? `.co-tint::after{ content:""; posit
 .sound.on .bars i:nth-child(2){ animation-delay:.15s } .sound.on .bars i:nth-child(3){ animation-delay:.3s } .sound.on .bars i:nth-child(4){ animation-delay:.45s }
 @keyframes eq{ 0%,100%{ height:28% } 50%{ height:100% } }
 
+/* ============ 3b · THE DIAL — the site in more than one language ======= */
+.dial{ position:fixed; z-index:70; left:var(--gut); bottom:1.05rem; display:flex; gap:1px;
+  background:var(--accent-line); border:1px solid var(--accent-line); }
+.dial-b{ background:${alpha(ground, 0.82)}; backdrop-filter:blur(9px); border:0; color:var(--muted); cursor:pointer;
+  font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.24em; text-transform:uppercase;
+  padding:.62rem .9rem; transition:color .2s, background .2s; }
+.dial-b:hover{ color:var(--ink); }
+.dial-b.is-on{ background:var(--accent); color:${lightGround ? '#fff' : ground}; font-weight:700; }
+
 /* ============ 4 · SHELL ============ */
 main{ position:relative; z-index:10; }
 .ground-bed{ position:fixed; inset:0; z-index:0; overflow:hidden; }
@@ -145,24 +164,38 @@ ${w.ground.treatment.includes('grain') ? `.grain{ position:fixed; inset:-150%; z
   animation:grainshift 5s steps(6) infinite; }
 @keyframes grainshift{ 0%{transform:translate(0,0)} 20%{transform:translate(-4%,3%)} 40%{transform:translate(3%,-4%)} 60%{transform:translate(-3%,-3%)} 80%{transform:translate(4%,2%)} 100%{transform:translate(0,0)} }` : ''}
 
-section{ padding:clamp(4.5rem,13vh,10rem) var(--gut); position:relative; }
+section{ padding:clamp(3.5rem,9vh,7rem) var(--gut); position:relative; }
+section:first-of-type{ padding-top:clamp(5rem,14vh,9rem); }
 .slug{ font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.34em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:1.1rem; display:flex; align-items:center; gap:.8rem; }
 .slug::after{ content:""; flex:1; height:1px; background:var(--accent-line); }
 h2{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase; letter-spacing:-.02em; line-height:.92;
   font-size:clamp(1.8rem,6vw,4.2rem); margin-bottom:1.6rem; }
-p{ line-height:1.75; color:var(--muted); max-width:62ch; font-size:clamp(.95rem,1.6vw,1.06rem); }
+/* Body copy gets the reading face and near-full ink. Setting paragraphs in
+   the poster face put text on the page that nobody could actually read. */
+p{ font-family:var(--f-text); line-height:1.7; color:${alpha(ink, 0.88)}; max-width:60ch;
+   font-size:clamp(1rem,1.5vw,1.1rem); }
+p + p{ margin-top:1rem; }
 
 .reveal{ opacity:0; transform:translateY(26px); transition:opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
 .reveal.in{ opacity:1; transform:none; }
 
 /* ============ 5 · LIVE NUMBERS — the flex ============ */
-.figures{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); margin:2.5rem 0; }
-.fig{ background:var(--ground); padding:clamp(1.3rem,3vw,2rem); position:relative; }
-.fig b{ display:block; font-family:var(--f-disp); font-weight:900; font-size:clamp(1.6rem,4.6vw,3rem); line-height:1; letter-spacing:-.03em; color:var(--ink); font-variant-numeric:tabular-nums; }
+.figures{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:1px;
+  background:var(--line); border:1px solid var(--line); margin:2.5rem 0; max-width:100%; overflow:hidden; }
+.fig{ background:var(--ground); padding:clamp(1.15rem,2.4vw,1.6rem); position:relative;
+  display:flex; flex-direction:column; justify-content:flex-end; min-height:7.5rem; }
+.fig b{ display:block; font-family:var(--f-disp); font-weight:900; font-size:clamp(1.5rem,3.6vw,2.6rem); line-height:1;
+  letter-spacing:-.03em; color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
 .fig .fl{ display:block; font-family:var(--f-mono); font-size:.58rem; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); margin-top:.6rem; }
 .fig .src{ position:absolute; top:.7rem; right:.7rem; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.14em; color:var(--subtle); text-decoration:none; border-bottom:1px dotted var(--subtle); }
 .fig .src:hover{ color:var(--accent); border-color:var(--accent); }
 .fig.sealed b{ color:var(--subtle); letter-spacing:.06em; font-size:clamp(1.3rem,3.4vw,2.2rem); }
+/* A sealed claim renders as one redaction bar, sized like the number it is
+   standing in for. Admitting the gap reads as more credible than a round
+   number nobody can check — but it has to look deliberate, not broken. */
+.fig.sealed b{ display:flex; align-items:center; height:clamp(1.5rem,3.6vw,2.6rem); }
+.fig.sealed .bar{ display:block; width:min(100%,8.5ch); height:.62em;
+  background:repeating-linear-gradient(90deg, ${alpha(ink, 0.34)} 0 .8em, transparent .8em .95em); }
 .fig.sealed .fl{ color:var(--accent); }
 
 /* ============ 6 · THE CATALOGUE ============ */

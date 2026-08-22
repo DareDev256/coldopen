@@ -69,6 +69,15 @@ export interface Palette {
 export interface TypePair {
   /** display face — the wordmark and headings */
   readonly display: { family: string; weights: number[]; google: string };
+  /**
+   * Reading face — body copy.
+   *
+   * Separate from `display` because a poster face is not a text face. Setting
+   * paragraphs in Anton produced copy that was technically on the page and
+   * practically unreadable. Some grotesks (Archivo) can do both jobs and this
+   * is simply the same family again; poster faces get a companion.
+   */
+  readonly text: { family: string; weights: number[]; google: string };
   /** technical face — HUD labels, doc codes, counters */
   readonly mono: { family: string; weights: number[]; google: string };
 }
@@ -89,6 +98,42 @@ export interface Ground {
   readonly poster?: string;
   /** treatment applied to make it a GROUND rather than a hero picture */
   readonly treatment: readonly ('grain' | 'vignette' | 'scanlines' | 'desaturate' | 'tint' | 'blur-edge')[];
+  /**
+   * Where the threshold copy sits relative to the frame.
+   *
+   * Full-bleed footage has a subject in it. Centring the wordmark by default
+   * lays it across whoever is in the middle of the shot, which is the one
+   * thing a person laying out this page by hand would never do. Anchor the
+   * copy away from the subject instead.
+   */
+  readonly copyAnchor?: 'center' | 'top' | 'bottom';
+  /** object-position for the crop, e.g. '50% 30%' */
+  readonly focus?: string;
+}
+
+/**
+ * A register is the site in another language.
+ *
+ * Not an i18n afterthought — for a diaspora artist it is structural. Shortiie
+ * Raw's comment section is Portuguese and Angola-flagged while her streaming
+ * audience is 43% Canada; those are two different audiences reading the same
+ * page. A site that picks one has picked which half of her to erase.
+ *
+ * The engine only allows this when the artist's multilingualism is a SOURCED
+ * fact, because a language toggle on an artist who does not speak the language
+ * is a costume.
+ */
+export interface Register {
+  /** BCP-47, e.g. 'pt' */
+  readonly code: string;
+  /** how the dial labels it, in that language */
+  readonly label: string;
+  /** the lexicon in this register — same worlds, its own words */
+  readonly lexicon: Partial<Lexicon>;
+  readonly logline: string;
+  readonly story: readonly string[];
+  /** the ledger id proving the artist actually works in this language */
+  readonly evidenceId: string;
 }
 
 export interface World {
@@ -114,6 +159,9 @@ export interface World {
 
   /** which of the seven moves this world implements */
   readonly moves: readonly Move[];
+
+  /** optional: the site in more than one language. See Register. */
+  readonly registers?: readonly Register[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -189,11 +237,71 @@ export function assertGroundAllowed(hex: string, opts: { brandExemption?: string
   }
 }
 
-/** The accent must actually be saturated. A grey "accent" is not a hue. */
+export function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
+    : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  const f = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${f(r)}${f(g)}${f(b)}`.toUpperCase();
+}
+
+/**
+ * Lift an accent to legibility WITHOUT changing its hue.
+ *
+ * A premise the artist picked should not be thrown away over a contrast
+ * failure — the hue is the decision, the lightness is not. So we walk
+ * lightness away from the ground, keeping hue and saturation, until it
+ * clears. Returns null if the hue genuinely cannot work on that ground,
+ * which is a real answer and means the premise needs a different colour.
+ */
+export function liftAccentForGround(accent: string, ground: string, target = 3.0): string | null {
+  if (contrastRatio(accent, ground) >= target) return accent;
+  const a = hsl(accent);
+  const groundIsDark = luminance(ground) < 0.18;
+  const s = Math.max(a.s, 0.5);
+  for (let step = 1; step <= 60; step++) {
+    const l = groundIsDark ? Math.min(0.92, a.l + step * 0.01) : Math.max(0.12, a.l - step * 0.01);
+    const cand = hslToHex(a.h, s, l);
+    if (contrastRatio(cand, ground) >= target) return cand;
+  }
+  // try the other direction before giving up
+  for (let step = 1; step <= 60; step++) {
+    const l = groundIsDark ? Math.max(0.12, a.l - step * 0.01) : Math.min(0.94, a.l + step * 0.01);
+    const cand = hslToHex(a.h, s, l);
+    if (contrastRatio(cand, ground) >= target) return cand;
+  }
+  return null;
+}
+
+/**
+ * Move 6 is "ONE saturated hue tied to the artist". It is about the PAIR,
+ * not about the accent alone.
+ *
+ * The first version of this rule demanded a saturated accent unconditionally,
+ * which is wrong and produced a genuinely bad outcome: on a vermilion ground,
+ * the only cyan that reaches usable contrast is a washed-out ice blue. The
+ * ground WAS the saturated hue, and the rule was fighting it.
+ *
+ * So: at least one of ground/accent must carry real saturation. When the
+ * ground is the loud one, the accent's job is legibility, and a near-neutral
+ * is the correct answer rather than a failure.
+ */
+export function assertOneHue(ground: string, accent: string): void {
+  const g = hsl(ground), a = hsl(accent);
+  const groundIsLoud = g.s >= 0.45 && g.l > 0.10 && g.l < 0.90;
+  if (!groundIsLoud && a.s < 0.45) {
+    throw new Error(`COLD OPEN refused the pair ground ${ground} / accent ${accent}: neither carries a saturated hue (ground ${(g.s * 100).toFixed(0)}%, accent ${(a.s * 100).toFixed(0)}%). Move 6 is ONE loud hue tied to the artist — one of these two has to be it.`);
+  }
+  if (a.l < 0.08 || a.l > 0.98) {
+    throw new Error(`COLD OPEN refused accent "${accent}": lightness ${(a.l * 100).toFixed(0)}% is unusable against any ground.`);
+  }
+}
+
+/** @deprecated kept for the premise gate, which judges an accent before a ground pairing is final */
 export function assertAccentSaturated(hex: string): void {
   const { s, l } = hsl(hex);
-  if (s < 0.45) throw new Error(`COLD OPEN refused accent "${hex}": saturation ${(s * 100).toFixed(0)}% — the accent is the ONE hue tied to the artist and it must be loud. Minimum 45%.`);
-  if (l < 0.15 || l > 0.92) throw new Error(`COLD OPEN refused accent "${hex}": lightness ${(l * 100).toFixed(0)}% is unusable against a ground.`);
+  if (s < 0.45) throw new Error(`COLD OPEN refused accent "${hex}": saturation ${(s * 100).toFixed(0)}% — an accent standing alone must be loud. Minimum 45%.`);
+  if (l < 0.10 || l > 0.96) throw new Error(`COLD OPEN refused accent "${hex}": lightness ${(l * 100).toFixed(0)}% is unusable against a ground.`);
 }
 
 export interface WorldAudit {
@@ -208,7 +316,7 @@ export function auditWorld(w: World, ledger?: Ledger): WorldAudit {
   const problems: string[] = [];
 
   try { assertGroundAllowed(w.palette.ground); } catch (e) { problems.push((e as Error).message); }
-  try { assertAccentSaturated(w.palette.accent); } catch (e) { problems.push((e as Error).message); }
+  try { assertOneHue(w.palette.ground, w.palette.accent); } catch (e) { problems.push((e as Error).message); }
 
   const inkOnGround = contrastRatio(w.palette.ink, w.palette.ground);
   const accentOnGround = contrastRatio(w.palette.accent, w.palette.ground);
@@ -229,6 +337,17 @@ export function auditWorld(w: World, ledger?: Ledger): WorldAudit {
   }
 
   if (!w.sound) problems.push('no sound bed — sound is one of the seven moves, not an optional extra');
+
+  for (const r of w.registers ?? []) {
+    if (!r.evidenceId) {
+      problems.push(`register "${r.code}" cites no evidence — a language toggle on an artist who does not work in that language is a costume`);
+    } else if (ledger && !ledger.has(r.evidenceId)) {
+      problems.push(`register "${r.code}" cites "${r.evidenceId}", which is not a verified fact`);
+    }
+    for (const [slot, word] of Object.entries(r.lexicon ?? {})) {
+      if (generic.includes(String(word).toLowerCase().trim())) problems.push(`register ${r.code} lexicon.${slot} is "${word}" — generic`);
+    }
+  }
   if (!w.ground?.src) problems.push('no full-bleed ground media');
   if (!w.chrome?.docCode) problems.push('no document code — the HUD has nothing technical to say');
 

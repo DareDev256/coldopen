@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assertGroundAllowed, assertAccentSaturated, BannedGroundError, contrastRatio, auditWorld, type World } from '../src/world.ts';
+import { assertGroundAllowed, assertOneHue, liftAccentForGround, hsl, BannedGroundError, contrastRatio, auditWorld, type World } from '../src/world.ts';
 import { Ledger, UnsourcedFactError } from '../src/ledger.ts';
 import { assertDivergent, type PremiseDraft } from '../src/premise.ts';
 import { tagBalance, assertBalancePreserved, applyPatch, PatchRefused } from '../src/update.ts';
@@ -41,10 +41,34 @@ test('brand exemption must be stated out loud', () => {
   assert.doesNotThrow(() => assertGroundAllowed('#F7F1E7', { brandExemption: "client's existing brand is built on it" }));
 });
 
-test('a grey accent is not a hue', () => {
-  assert.throws(() => assertAccentSaturated('#8A8A8A'));
-  assert.throws(() => assertAccentSaturated('#7C7F84'));
-  assert.doesNotThrow(() => assertAccentSaturated('#3FD8FF'));
+test('a grey accent on a grey ground is not a hue', () => {
+  assert.throws(() => assertOneHue('#0A0A0A', '#8A8A8A'));
+  assert.throws(() => assertOneHue('#101214', '#7C7F84'));
+  assert.doesNotThrow(() => assertOneHue('#0A0A0A', '#3FD8FF'));
+});
+
+test('a near-neutral accent is CORRECT when the ground is the loud hue', () => {
+  // on vermilion, the only cyan that clears contrast is a washed-out ice blue.
+  // The ground is move 6, and demanding a saturated accent too fights it.
+  assert.doesNotThrow(() => assertOneHue('#C81E1E', '#F2F5F8'));
+  assert.doesNotThrow(() => assertOneHue('#1B2FE8', '#EDEFF2'));
+});
+
+test('lifting an accent for contrast preserves its hue', () => {
+  const lifted = liftAccentForGround('#1BB6E8', '#C81E1E', 3)!;
+  assert.ok(lifted);
+  assert.ok(contrastRatio(lifted, '#C81E1E') >= 3);
+  assert.ok(Math.abs(hsl(lifted).h - hsl('#1BB6E8').h) < 2, 'hue drifted');
+});
+
+test('the premise gate rejects an unbuildable premise at CHOOSING time', () => {
+  const r = assertDivergent([
+    draft({ name: 'A', topology: 'spatial', ground: '#C81E1E', accent: '#1BB6E8', thresholdGesture: 'hold', lexicon: { contact: 'THE DOOR' } }),
+    draft({ name: 'B', topology: 'dossier', accent: '#3FD8FF' }),
+    draft({ name: 'C', topology: 'broadcast', accent: '#B14BFF', thresholdGesture: 'press' }),
+  ]);
+  assert.ok(r.problems.some(p => p.includes('below 3:1')), r.problems.join(' | '));
+  assert.ok(r.problems.some(p => p.includes('Same hue at')), 'the gate should suggest the corrected accent');
 });
 
 /* ---------- the ledger ---------- */

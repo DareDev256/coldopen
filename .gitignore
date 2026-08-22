@@ -4,3 +4,10 @@ node_modules/
 studio/public/preview/
 *.log
 .DS_Store
+
+# Artist artwork is fetched at build time, not redistributed here.
+# These are YouTube thumbnails and label cover art belonging to the artists
+# and their labels; build.ts pulls them fresh.
+worlds/*/assets/*.jpg
+worlds/*/assets/*.png
+worlds/*/site/
