@@ -340,7 +340,9 @@ p + p{ margin-top:1rem }
 .sources td{ padding:.7rem .8rem; border-bottom:1px solid var(--line); color:var(--muted); vertical-align:top }
 .sources td a{ color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent-line); word-break:break-all }
 .sources .wrap{ overflow-x:auto }
-footer{ padding:2.5rem var(--gut) 6.5rem; border-top:1px solid var(--line); font-family:var(--f-mono); font-size:.58rem;
+/* The track is the whole page now. Without this the sticky hero released and
+   you scrolled off the bottom of the room into blue nothing. */
+footer{ padding:2.5rem var(--gut) 2.5rem; border-top:1px solid var(--line); font-family:var(--f-mono); font-size:.58rem;
   letter-spacing:.2em; text-transform:uppercase; color:var(--subtle); display:flex; justify-content:space-between;
   gap:1rem; flex-wrap:wrap }
 footer a{ color:var(--muted); text-decoration:none } footer a:hover{ color:var(--accent) }

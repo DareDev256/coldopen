@@ -574,7 +574,23 @@ host.addEventListener('click', () => {
 /* ------------------------------------------------------------------ */
 /* state                                                               */
 /* ------------------------------------------------------------------ */
-let opened = false, openT = 0, openTarget = 0, spin = 0, spinTarget = 0;
+/* ENTRY IS A TIMED CINEMATIC, NOT A SCROLL POSITION.
+ *
+ * Driving the open off scroll meant a tag click smooth-scrolled you past the
+ * whole transition in about a second: one frame you were outside the case, the
+ * next you were inside it. There was no opening — it was a cut. Nobody ever
+ * saw the clamshell swing, which is the single thing the object exists to do.
+ *
+ * So entry runs on its own clock, in two beats you can actually watch:
+ *   0.00 - 0.62  the latches release and the halves swing wide. Camera holds.
+ *   0.45 - 1.00  the camera travels through the gap into the room.
+ * Scroll only turns your head, and only once you are in. */
+const ENTRY_MS = 3200;
+let entry = 0;               // 0 outside, 1 standing inside
+let entryDir = 0;            // +1 going in, -1 backing out
+let opened = false, openT = 0, spin = 0, spinTarget = 0;
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const easeIO = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* Scroll position is the ONLY source of truth for how open the case is.
@@ -584,13 +600,10 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
    blocking everything inside. A click now SCROLLS to the open point instead of
    fighting it. */
 export function openCase() {
+  if (entryDir > 0) return;
   opened = true;
+  entryDir = 1;
   document.body.classList.add('is-open');
-  if (track) {
-    const total = track.offsetHeight - innerHeight;
-    const want = total * 0.2;
-    if (scrollY < want) scrollTo({ top: want, behavior: reduce ? 'auto' : 'smooth' });
-  } else openTarget = 1;
   /* Tell the DOM layer too. Scrolling used to open the scene while the
      language tags stayed on screen, because the two halves each had their own
      idea of "open" and only the click path told both. */
@@ -618,9 +631,13 @@ function readScroll() {
   /* Reversible. The case opens across the first sixth of the track and closes
      again on the way back up — a threshold you can only cross once is a door
      that deletes itself, and the object is the whole point of the page. */
-  openTarget = Math.min(1, p / 0.16);
-  if (!opened && p > 0.015) { opened = true; document.body.classList.add('is-open');
-    if (typeof window.__coldopenUIOpen === 'function') window.__coldopenUIOpen(); }
+  /* Scroll turns your head once you are inside. It also STARTS the entry the
+     first time, and backing all the way to the top reverses it. */
+  if (p > 0.02 && entryDir <= 0) {
+    if (typeof window.__coldopenUIOpen === 'function') window.__coldopenUIOpen();
+    else openCase();
+  }
+  if (p <= 0.004 && entryDir > 0 && entry > 0.99) { entryDir = -1; opened = false; document.body.classList.remove('is-open'); }
 }
 addEventListener('scroll', readScroll, { passive: true });
 addEventListener('resize', readScroll);
@@ -643,8 +660,14 @@ function tick() {
   requestAnimationFrame(tick);
   const dt = Math.min(clock.getDelta(), 0.05);
 
-  openT += (openTarget - openT) * Math.min(1, dt * 2.6);
-  const e = 1 - Math.pow(1 - openT, 3);
+  if (entryDir !== 0) entry = clamp01(entry + entryDir * (dt * 1000) / ENTRY_MS);
+  openT = entry;
+
+  /* Two beats, deliberately overlapping so it reads as one move: the shell
+     opens first, the camera follows it in. */
+  const shell = easeIO(clamp01(entry / 0.62));
+  const travel = easeIO(clamp01((entry - 0.45) / 0.55));
+  const e = shell;
 
   /* ENTERING.
      The halves swing wide and the camera flies through the gap between them
@@ -654,23 +677,25 @@ function tick() {
   halfL.rotation.y = e * 2.5;
   halfR.rotation.y = -e * 2.5;
   handle.visible = e < 0.4;
-  exterior.visible = e < 0.9;                 // gone before it can block the room
-  exterior.scale.setScalar(1 + e * 6.5);      // it opens past you as you enter
-  exterior.position.z = e * 12.0;
+  /* The shell only rushes past once the camera is actually moving; scaling it
+     during the swing made the case lunge at the viewer before it had opened. */
+  exterior.visible = travel < 0.94;
+  exterior.scale.setScalar(1 + travel * 6.5);
+  exterior.position.z = travel * 12.0;
 
   /* Camera: from outside the case, through the gap, to standing in the room. */
-  camera.position.z = 13.2 - e * (13.2 - 2.05);
-  camera.position.y = 0.15 - e * 0.15;
+  camera.position.z = 13.2 - travel * (13.2 - 2.05);
+  camera.position.y = 0.15 - travel * 0.15;
 
   /* Scroll turns your head, exactly as it turns the room in a vault. */
   spin += (spinTarget - spin) * 0.08;
   camera.rotation.order = 'YXZ';
-  camera.rotation.y = spin * openT;
-  camera.rotation.x = -0.10 * openT;
+  camera.rotation.y = spin * travel;
+  camera.rotation.x = -0.10 * travel;
 
   /* The room only exists once you are through the threshold, so its lining
      never shows through the closed shell. */
-  room.visible = e > 0.06;
+  room.visible = entry > 0.12;
 
   /* Only the video items nearest the camera decode. Ten 1080p streams stall a
      phone long before they run out of memory, and a wall that stutters is
@@ -739,6 +764,31 @@ function tick() {
   }
 }
 
-if (reduce) { openT = 1; openTarget = 1; opened = true; document.body.classList.add('is-open'); }
+/* A measurement hook. Screenshots at chosen angles hid an empty room for
+   several passes; being able to ask the scene where the camera actually is,
+   and what is actually in front of it, is worth six bytes. */
+window.__dbg = () => {
+  const f = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+  const v = new THREE.Vector3();
+  const seen = items.map((it) => {
+    it.mesh.getWorldPosition(v);
+    const to = v.clone().sub(camera.position);
+    const d = to.length();
+    v.project(camera);
+    const onScreen = v.z < 1 && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
+    return { k: it.kind, onScreen, d: +d.toFixed(1), x: +v.x.toFixed(2), y: +v.y.toFixed(2) };
+  });
+  return {
+    openT: +openT.toFixed(3), entry: +entry.toFixed(3), spin: +spin.toFixed(3),
+    cam: [+camera.position.x.toFixed(2), +camera.position.y.toFixed(2), +camera.position.z.toFixed(2)],
+    yawDeg: +(camera.rotation.y * 180 / Math.PI).toFixed(1),
+    fwd: [+f.x.toFixed(2), +f.y.toFixed(2), +f.z.toFixed(2)],
+    roomVisible: room.visible, extVisible: exterior.visible,
+    onScreen: seen.filter((s) => s.onScreen).length, total: seen.length,
+    sample: seen.slice(0, 6),
+  };
+};
+
+if (reduce) { entry = 1; entryDir = 1; opened = true; document.body.classList.add('is-open'); }
 tick();
 root && root.setAttribute('data-ready', '1');
