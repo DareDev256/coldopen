@@ -124,7 +124,47 @@ body.is-open .hero-copy{ opacity:0; transform:translateY(-28px) }
 .tag-name{ display:block; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.2em; text-transform:uppercase;
   opacity:.66; margin-top:.28rem }
 
-/* ---------- the info tags on the wall ---------- */
+/* ---------- what you are pointing at ---------- */
+#pickcap{ position:absolute; left:50%; bottom:clamp(4.5rem,11vh,7rem); transform:translateX(-50%); z-index:6;
+  font-family:var(--f-mono); font-size:clamp(.58rem,1.3vw,.72rem); letter-spacing:.24em; text-transform:uppercase;
+  color:var(--accent); background:${alpha('#05060A', 0.86)}; backdrop-filter:blur(8px);
+  border:1px solid var(--accent-line); padding:.55rem .9rem; border-radius:2px;
+  opacity:0; transition:opacity .22s ease; pointer-events:none; white-space:nowrap; max-width:88vw; overflow:hidden; text-overflow:ellipsis }
+#pickcap.on{ opacity:1 }
+
+/* ---------- the pouch: passport and documents ---------- */
+#docs{ position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center;
+  padding:var(--gut); background:${alpha('#04050A', 0.86)}; backdrop-filter:blur(10px);
+  /* visibility, not just opacity: an opacity-0 dialog still hands its children
+     to the accessibility tree and can still paint stray boxes over the canvas */
+  opacity:0; visibility:hidden; pointer-events:none; transition:opacity .35s ease, visibility .35s }
+#docs.open{ opacity:1; visibility:visible; pointer-events:auto }
+.doc{ position:relative; width:min(100%,720px); max-height:86svh; overflow:auto;
+  background:linear-gradient(168deg,#F6F3EA,#E6E1D4); color:#14131A; border-radius:3px;
+  box-shadow:0 30px 80px ${alpha('#000000', 0.6)}; padding:clamp(1.4rem,4vw,2.6rem) }
+/* a passport page, not a modal: the object you took out of the pouch */
+.doc::before{ content:""; position:absolute; inset:10px; border:1px solid ${alpha('#14131A', 0.22)}; pointer-events:none }
+.doc-h{ font-family:var(--f-mono); font-size:.56rem; letter-spacing:.32em; text-transform:uppercase; color:#6A6252;
+  display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.2rem }
+.doc h3{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase; letter-spacing:-.02em; line-height:.92;
+  font-size:clamp(1.6rem,5vw,2.8rem); margin-bottom:1rem; color:#14131A }
+.doc p{ color:#2A2733; max-width:58ch; font-size:clamp(.95rem,1.5vw,1.04rem); line-height:1.72 }
+.doc p + p{ margin-top:.85rem }
+.doc-fields{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+  background:${alpha('#14131A', 0.18)}; border:1px solid ${alpha('#14131A', 0.18)}; margin:1.5rem 0 }
+.doc-f{ background:#F2EFE6; padding:.8rem .9rem }
+.doc-f b{ display:block; font-family:var(--f-disp); font-weight:900; font-size:1.02rem; letter-spacing:-.01em; color:#14131A }
+.doc-f span{ display:block; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.22em; text-transform:uppercase;
+  color:#6A6252; margin-top:.3rem }
+.doc-q{ border-left:3px solid #B4181F; padding:.2rem 0 .2rem 1rem; margin:1.4rem 0; font-style:italic; color:#2A2733 }
+.doc-q cite{ display:block; font-style:normal; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.2em;
+  text-transform:uppercase; color:#6A6252; margin-top:.5rem }
+.doc-q cite a{ color:#B4181F }
+.doc-x{ position:absolute; top:.7rem; right:.8rem; z-index:2; background:none; border:0; cursor:pointer;
+  font-family:var(--f-mono); font-size:.6rem; letter-spacing:.24em; color:#6A6252; padding:.4rem }
+.doc-x:hover{ color:#B4181F }
+
+/* ---------- (retired) the info tags on the wall ---------- */
 .gl-tag{ position:absolute; top:0; left:0; opacity:0; text-decoration:none;
   transition:opacity .35s ease; will-change:transform,opacity;
   padding:.55rem .7rem; min-width:9.5rem; text-align:left;
@@ -282,10 +322,24 @@ function figure(l: Ledger, id: string): string {
   return '';
 }
 
+export interface Polaroid { readonly src: string; readonly caption: string; readonly href?: string }
+
+export interface Docs {
+  readonly kicker: string;
+  readonly title: string;
+  readonly fields: readonly { label: string; value: string }[];
+  readonly body: readonly string[];
+  readonly quotes: readonly { text: string; source: string; sourceUrl: string }[];
+}
+
 export interface WebGLExtras {
   readonly panels: readonly Panel[];
   /** the montage behind the closed case, and its poster */
   readonly montage?: { src: string; poster: string };
+  /** loose in the top of the case */
+  readonly polaroids?: readonly Polaroid[];
+  /** what is in the pouch — the about, as papers rather than a bio block */
+  readonly docs?: Docs;
 }
 
 export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: WebGLExtras): string {
@@ -297,6 +351,8 @@ export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseSh
   const cfg = {
     palette: { ground: w.palette.ground, accent: w.palette.accent, payoff: w.palette.payoff },
     panels: x.panels,
+    polaroids: x.polaroids ?? [],
+    pouchLabel: x.docs?.kicker ?? 'DOCUMENTS',
   };
 
   return `<!doctype html>
@@ -350,7 +406,7 @@ ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-
       : `<img src="${esc(c.ogImage)}" alt="" />`}
   </div>
   <canvas id="gl"></canvas>
-  <div id="gl-labels"></div>
+  <p class="mono" id="pickcap" aria-live="polite"></p>
 
   <div class="hero-copy">
     <p class="premise">${esc(w.name)}</p>
@@ -367,7 +423,7 @@ ${regs.map(r => `      <button class="tag" data-reg="${esc(r.code)}" aria-label=
       </button>`).join('\n')}
     </div>
   </div>` : ''}
-  <p class="scrollhint mono">${esc(w.threshold.reward)} — SCROLL TO TURN THE WALL</p>
+  <p class="scrollhint mono">${esc(w.threshold.reward)} — EVERYTHING IS IN THE CASE</p>
 </div>
 </div>
 
@@ -441,6 +497,21 @@ ${l.allSealed().map(s => `          <tr><td>${esc(s.label)}</td><td>████
   <span class="mono">${esc(w.chrome.docCode)}</span>
   <span>Built by <a href="https://jamesdare.com" target="_blank" rel="noopener">DareDev256</a> · COLD OPEN</span>
 </footer>
+
+<!-- the pouch. Passport and documents: who she is, sourced like everything else. -->
+<div id="docs" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(x.docs?.title ?? 'Documents')}">
+  <div class="doc" id="docs-body">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>${esc(x.docs?.kicker ?? 'PASSPORT')}</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3>${esc(x.docs?.title ?? w.artist)}</h3>
+${(x.docs?.fields ?? []).map(f => '').join('')}
+    <div class="doc-fields">
+${(x.docs?.fields ?? []).map(f => `      <div class="doc-f"><b>${esc(f.value)}</b><span>${esc(f.label)}</span></div>`).join('\n')}
+    </div>
+${(x.docs?.body ?? []).map(p => `    <p>${esc(p)}</p>`).join('\n')}
+${(x.docs?.quotes ?? []).map(q => `    <blockquote class="doc-q">${esc(q.text)}<cite><a href="${esc(q.sourceUrl)}" target="_blank" rel="noopener">${esc(q.source)} ↗</a></cite></blockquote>`).join('\n')}
+  </div>
+</div>
 
 <script>window.__COLDOPEN__ = ${JSON.stringify(cfg)};</script>
 <script src="js/ui.js" defer></script>

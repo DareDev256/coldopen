@@ -33,7 +33,7 @@ const LIVE_BUDGET = matchMedia('(max-width: 820px)').matches ? 2 : 5;
 const host = document.getElementById('gl');
 const labelLayer = document.getElementById('gl-labels');
 const root = document.getElementById('glroot');
-if (!host || !PANELS.length) throw new Error('cold open: no canvas or no panels');
+if (!host) throw new Error('cold open: no canvas');
 
 /* ------------------------------------------------------------------ */
 /* renderer                                                            */
@@ -220,78 +220,132 @@ for (const y of [0.72, -0.72]) {
 }
 
 /* ------------------------------------------------------------------ */
-/* the wall — her work, on a cylinder around the camera                */
+/* WHAT IS PACKED INSIDE                                                */
 /* ------------------------------------------------------------------ */
-const RADIUS = 7.8;
-const wall = new THREE.Group();
-scene.add(wall);
-const panels = [];
+/* The contents ARE the site. A wall of screens floating in space was a
+   gallery with a suitcase parked in front of it; this is a case you open and
+   look into, which is the only reason to build an object at all. */
 
 const loader = new THREE.TextureLoader();
-/* Arc width is a framing decision, not decoration. At 1.78pi the ten panels
-   sat 64 degrees apart and only one or two ever fell inside the frustum — the
-   wall read as two floating screens. Tightened so three columns are in frame
-   at once, which is the point at which it reads as a WALL. */
-const ARC = Math.PI * 0.82;
-const ROWS = PANELS.length > 6 ? 2 : 1;
-const perRow = Math.ceil(PANELS.length / ROWS);
+const inside = new THREE.Group();
+inside.position.z = -CASE_D / 4 + 0.02;
+caseGroup.add(inside);
 
-PANELS.forEach((p, i) => {
-  const row = Math.floor(i / perRow);
-  const col = i % perRow;
-  const a = -ARC / 2 + (col + 0.5) * (ARC / perRow);
-  const y = ROWS === 1 ? 0.1 : (row === 0 ? 1.12 : -1.06);
+/* the lining the contents sit against */
+const lining = new THREE.Mesh(
+  new THREE.PlaneGeometry(CASE_W - 0.12, CASE_H - 0.12),
+  new THREE.MeshStandardMaterial({ color: 0x15121B, roughness: 0.92, metalness: 0.04 })
+);
+inside.add(lining);
 
-  const w = 3.15, h = w * 9 / 16;
-  const geo = new THREE.PlaneGeometry(w, h, 1, 1);
-  const poster = loader.load(p.poster);
-  poster.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshBasicMaterial({ map: poster, toneMapped: false });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(Math.sin(a) * RADIUS, y, -Math.cos(a) * RADIUS);
-  mesh.lookAt(0, y, 0);
-  wall.add(mesh);
+/* A polaroid is drawn, not loaded: white card, photo inset, caption in the
+   margin. Shipping eight pre-composited frames would be eight more files and
+   would bake the caption into the image, where no translation can reach it. */
+function polaroidTexture(img, caption) {
+  const W = 512, H = 620, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#F4F2EC'; g.fillRect(0, 0, W, H);          // the card stock
+  g.fillStyle = '#0B0B0D'; g.fillRect(28, 28, W - 56, 440); // the photo well
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const s2 = Math.max((W - 56) / iw, 440 / ih);
+  g.drawImage(img, 28 + ((W - 56) - iw * s2) / 2, 28 + (440 - ih * s2) / 2, iw * s2, ih * s2);
+  g.fillStyle = '#1A1A1E';
+  g.font = '600 30px ui-monospace, Menlo, monospace';
+  g.textAlign = 'center';
+  g.fillText(caption.toUpperCase(), W / 2, 545);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
 
-  // bezel
-  const bez = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.1, h + 0.1), new THREE.MeshBasicMaterial({ color: 0x05060A }));
-  bez.position.copy(mesh.position).multiplyScalar(1.004);
-  bez.quaternion.copy(mesh.quaternion);
-  wall.add(bez);
+const items = [];        // everything clickable
+const POL = CFG.polaroids || [];
+const VID = CFG.panels || [];
 
-  // the label, in the DOM, tracking this panel
-  let el = null;
-  if (labelLayer) {
-    el = document.createElement('a');
-    el.className = 'gl-tag';
-    el.href = p.href; el.target = '_blank'; el.rel = 'noopener';
-    el.innerHTML =
-      '<span class="t-n">' + String(i + 1).padStart(2, '0') + '</span>' +
-      '<span class="t-title">' + p.title + '</span>' +
-      '<span class="t-meta">' + (p.sub || '') + '</span>' +
-      (p.sourceHost ? '<span class="t-src">' + p.sourceHost + ' ↗</span>' : '');
-    labelLayer.appendChild(el);
-  }
-
-  // anchor the label to the panel's lower-left corner in the panel's own
-  // space, so it sits ON the frame rather than across the picture
-  const anchor = new THREE.Object3D();
-  anchor.position.set(-w / 2 + 0.06, -h / 2 + 0.06, 0.02);
-  mesh.add(anchor);
-  panels.push({ mesh, mat, poster, el, cfg: p, video: null, live: false, anchor });
+/* ---- polaroids, loose in the top of the case ---- */
+/* Loose in the top of the case, overlapping the way a handful of photographs
+   actually sits — a tidy grid would read as a contact sheet, not a pile. */
+const POL_LAYOUT = [
+  [-0.74,  1.14, -8], [-0.02,  1.24,  5], [ 0.72,  1.10, -5],
+  [-0.78,  0.52,  7], [-0.04,  0.60, -6], [ 0.76,  0.48,  9],
+];
+POL.slice(0, POL_LAYOUT.length).forEach((p, i) => {
+  const [x, y, rot] = POL_LAYOUT[i];
+  const geo = new THREE.PlaneGeometry(0.6, 0.73);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.86, metalness: 0.0 });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, 0.012 + i * 0.004);
+  m.rotation.z = rot * Math.PI / 180;
+  inside.add(m);
+  const img = new Image();
+  img.onload = () => { mat.map = polaroidTexture(img, p.caption); mat.needsUpdate = true; };
+  img.src = p.src;
+  items.push({ mesh: m, kind: 'polaroid', data: p, home: m.position.clone(), rot: m.rotation.z });
 });
 
-/* ---- video promotion, inside a hard budget ---- */
+/* ---- the music videos, seated under an elastic strap ---- */
+const strapMat = new THREE.MeshStandardMaterial({ color: 0x121216, roughness: 0.7 });
+const strap = new THREE.Mesh(new THREE.PlaneGeometry(CASE_W - 0.16, 0.055), strapMat);
+strap.position.set(0, -0.07, 0.09);
+inside.add(strap);
+
+const VID_LAYOUT = [[-0.7, -0.42], [0.0, -0.42], [0.7, -0.42], [-0.7, -0.98], [0.0, -0.98], [0.7, -0.98]];
+VID.slice(0, VID_LAYOUT.length).forEach((v, i) => {
+  const [x, y] = VID_LAYOUT[i];
+  const w = 0.6, h = w * 9 / 16;
+  const poster = loader.load(v.poster);
+  poster.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({ map: poster, toneMapped: false });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  m.position.set(x, y, 0.02);
+  inside.add(m);
+  const bez = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.03, h + 0.03), new THREE.MeshBasicMaterial({ color: 0x05060A }));
+  bez.position.set(x, y, 0.014);
+  inside.add(bez);
+  items.push({ mesh: m, kind: 'video', data: v, mat, poster, video: null, live: false, home: m.position.clone(), rot: 0 });
+});
+
+/* ---- the pouch: passports and documents, i.e. who she is ---- */
+const pouch = new THREE.Group();
+/* Bottom of the case, fully in frame. It first sat below the interior and was
+   clipped by the viewport — a clickable object nobody can see is not one. */
+pouch.position.set(0, -1.44, 0.05);
+inside.add(pouch);
+{
+  const body = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 0.5),
+    new THREE.MeshStandardMaterial({ color: 0x1D1A24, roughness: 0.88 }));
+  pouch.add(body);
+  const zip = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 0.035),
+    new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1, roughness: 0.3 }));
+  zip.position.set(0, 0.225, 0.005);
+  pouch.add(zip);
+  // a passport corner poking out of it
+  const pp = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.4),
+    new THREE.MeshStandardMaterial({ color: 0x7A1420, roughness: 0.8 }));
+  pp.position.set(0.4, 0.19, -0.004);
+  pp.rotation.z = 0.14;
+  pouch.add(pp);
+  items.push({ mesh: body, kind: 'pouch', data: { label: CFG.pouchLabel || 'DOCUMENTS' }, home: pouch.position.clone(), rot: 0 });
+}
+
+/* ---- video promotion, inside a hard budget ----
+   A poster is the resting state. A clip is promoted to a live texture only
+   when it is one of the nearest items and the frame budget allows, and it is
+   torn all the way down on demotion — pausing alone leaves the decoder alive
+   and the budget stops meaning anything. */
 function makeVideo(src) {
   const v = document.createElement('video');
   v.src = src; v.muted = true; v.loop = true; v.playsInline = true;
   v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
-  v.crossOrigin = 'anonymous'; v.preload = 'auto';
+  v.preload = 'auto';
   return v;
 }
 function promote(p) {
-  if (p.live || !p.cfg.video) return;
+  if (p.live || !p.data.video) return;
   p.live = true;
-  p.video = makeVideo(p.cfg.video);
+  p.video = makeVideo(p.data.video);
   const tex = new THREE.VideoTexture(p.video);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.minFilter = THREE.LinearFilter;
@@ -308,15 +362,69 @@ function demote(p) {
 }
 
 /* ------------------------------------------------------------------ */
+/* PICKING UP WHAT IS IN THE CASE                                       */
+/* ------------------------------------------------------------------ */
+/* Everything in here is a real object you can pick up. A polaroid lifts out
+   of the pile and turns to face you; a video card opens the video; the pouch
+   opens her documents. Hover state matters as much as the click — an object
+   that does not respond to the cursor reads as a picture of an object. */
+const ray = new THREE.Raycaster();
+const ptr = new THREE.Vector2(-2, -2);
+let hovered = null, held = null;
+
+addEventListener('pointermove', (e) => {
+  ptr.x = (e.clientX / innerWidth) * 2 - 1;
+  ptr.y = -(e.clientY / innerHeight) * 2 + 1;
+});
+
+function pick() {
+  if (openT < 0.55) return null;
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(items.map((i) => i.mesh), false)[0];
+  return hit ? items.find((i) => i.mesh === hit.object) : null;
+}
+
+const docs = document.getElementById('docs');
+const docsBody = document.getElementById('docs-body');
+function openDocs() {
+  if (!docs) return;
+  docs.classList.add('open');
+  docs.setAttribute('aria-hidden', 'false');
+  const first = docs.querySelector('button, a');
+  if (first) first.focus();
+}
+function closeDocs() {
+  if (!docs) return;
+  docs.classList.remove('open');
+  docs.setAttribute('aria-hidden', 'true');
+}
+if (docs) {
+  docs.addEventListener('click', (e) => { if (e.target === docs || e.target.dataset.close !== undefined) closeDocs(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDocs(); });
+}
+
+host.addEventListener('click', () => {
+  const it = pick();
+  if (!it) { if (held) held = null; return; }
+  if (it.kind === 'pouch') { openDocs(); return; }
+  if (it.kind === 'video') { window.open(it.data.href, '_blank', 'noopener'); return; }
+  held = held === it ? null : it;      // a polaroid you picked up, put back
+});
+
+/* ------------------------------------------------------------------ */
 /* state                                                               */
 /* ------------------------------------------------------------------ */
-let opened = false, openT = 0, spin = 0, spinTarget = 0;
+let opened = false, openT = 0, openTarget = 0, spin = 0, spinTarget = 0;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function openCase() {
-  if (opened) return;
   opened = true;
+  openTarget = 1;
   document.body.classList.add('is-open');
+  /* Tell the DOM layer too. Scrolling used to open the scene while the
+     language tags stayed on screen, because the two halves each had their own
+     idea of "open" and only the click path told both. */
+  if (typeof window.__coldopenUIOpen === 'function') window.__coldopenUIOpen();
 }
 window.__coldopenOpen = openCase;
 
@@ -325,23 +433,23 @@ window.__coldopenOpen = openCase;
    trackpad momentum, keyboard paging and screen readers, and it makes the
    scrollbar lie about the length of the page. */
 const track = document.getElementById('glscroll');
-/* Sweep exactly the arc that is NOT already in frame, and no further.
-   A fixed rotation (1.15pi) swung the whole wall past the camera and left the
-   viewer staring at empty ground halfway down the track. Derived from the real
-   horizontal field of view so it stays correct at any aspect ratio. */
-function sweepRange() {
-  const vfov = camera.fov * Math.PI / 180;
-  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
-  return Math.max(0.25, ARC - hfov * 0.92);
-}
+/* Scroll leans the open case, it does not spin a carousel. The range is small
+   on purpose: you are looking into one object, and the useful motion is the
+   one you would make with your own head, not a turntable. */
+const LEAN = 0.62;
+function sweepRange() { return LEAN; }
 function readScroll() {
   if (!track) return;
   const total = track.offsetHeight - innerHeight;
   const p = total > 0 ? Math.max(0, Math.min(1, -track.getBoundingClientRect().top / total)) : 0;
   // the first tenth of the track is the threshold; the rest turns the wall
-  const t = Math.max(0, (p - 0.1) / 0.9);
+  const t = Math.max(0, (p - 0.16) / 0.84);
   spinTarget = -sweepRange() / 2 + t * sweepRange();
-  if (p > 0.015) openCase();
+  /* Reversible. The case opens across the first sixth of the track and closes
+     again on the way back up — a threshold you can only cross once is a door
+     that deletes itself, and the object is the whole point of the page. */
+  if (!opened) { if (p > 0.015) openCase(); }
+  else openTarget = Math.max(0.001, Math.min(1, p / 0.16));
 }
 addEventListener('scroll', readScroll, { passive: true });
 addEventListener('resize', readScroll);
@@ -364,54 +472,76 @@ function tick() {
   requestAnimationFrame(tick);
   const dt = Math.min(clock.getDelta(), 0.05);
 
-  if (opened) openT = Math.min(1, openT + dt / 1.5);
+  openT += (openTarget - openT) * Math.min(1, dt * 2.6);
   const e = 1 - Math.pow(1 - openT, 3);
 
-  // the halves swing out, the camera rides through the gap between them
-  halfL.rotation.y = e * 1.95;
-  halfR.rotation.y = -e * 1.95;
-  caseGroup.position.z = e * 6.2;
-  caseGroup.scale.setScalar(1 + e * 0.9);
-  handle.visible = e < 0.5;
+  /* The halves swing wide and the camera comes in until the open case fills
+     the frame — you end up looking down into it, close enough to read a
+     polaroid caption. The case never flies past the camera and never leaves
+     the world; scroll back up and it closes again.
 
-  /* Stop short of the axis. Standing exactly at the centre of the cylinder
-     puts only two or three panels inside the frustum and the wall stops
-     reading as a wall; a couple of units back keeps six or seven in view. */
-  camera.position.z = 13.2 - e * 9.4;
-  camera.position.y = 0.15 + e * 0.03;
+     Framing is derived, not tuned by eye: solve the camera distance that makes
+     the interior occupy TARGET_FILL of the viewport height at the current fov,
+     so it frames the same on a phone and an ultrawide. */
+  halfL.rotation.y = e * 2.34;
+  halfR.rotation.y = -e * 2.34;
+  caseGroup.position.z = 0;
+  caseGroup.position.y = -0.1;
+  caseGroup.scale.setScalar(1);
+  handle.visible = e < 0.4;
 
+  const TARGET_FILL = 0.86;
+  const vfov = camera.fov * Math.PI / 180;
+  const needH = CASE_H / TARGET_FILL;
+  const closeZ = (needH / 2) / Math.tan(vfov / 2) + CASE_D;
+  camera.position.z = 13.2 - e * (13.2 - closeZ);
+  camera.position.y = 0.15 - e * 0.22;
+
+  /* Scroll leans the open case rather than spinning a carousel — you are
+     looking INTO one object, so the only motion that makes sense is the one
+     you would make with your own head. */
   spin += (spinTarget - spin) * 0.075;
-  wall.rotation.y = spin;
-  camera.rotation.y = 0;
+  caseGroup.rotation.y = spin * 0.34 * openT;
+  caseGroup.rotation.x = 0.02 + spin * 0.06 * openT;
 
-  // only the nearest panels decode video
-  if (openT > 0.55) {
-    const ranked = panels.map((p) => {
-      p.mesh.getWorldPosition(tmp);
-      return { p, d: tmp.distanceTo(camera.position), facing: tmp.z < camera.position.z };
+  /* Only the video items nearest the camera decode. Ten 1080p streams stall a
+     phone long before they run out of memory, and a wall that stutters is
+     worse than one that holds still. */
+  if (openT > 0.6) {
+    const vids = items.filter((it) => it.kind === 'video');
+    const ranked = vids.map((it) => {
+      it.mesh.getWorldPosition(tmp);
+      return { it, d: tmp.distanceTo(camera.position) };
     }).sort((a, b) => a.d - b.d);
-    ranked.forEach((r, i) => {
-      if (i < (degraded ? 1 : LIVE_BUDGET) && r.facing) promote(r.p); else demote(r.p);
-    });
+    ranked.forEach((r, i) => { if (i < (degraded ? 1 : LIVE_BUDGET)) promote(r.it); else demote(r.it); });
   }
 
-  // labels track their panel in screen space
-  if (labelLayer && openT > 0.5) {
-    for (const p of panels) {
-      if (!p.el) continue;
-      p.mesh.getWorldPosition(tmp);
-      const dist = tmp.distanceTo(camera.position);
-      p.anchor.getWorldPosition(tmp);
-      tmp.project(camera);
-      const on = tmp.z < 1 && Math.abs(tmp.x) < 1.0 && Math.abs(tmp.y) < 1.0;
-      if (!on) { p.el.style.opacity = '0'; p.el.style.pointerEvents = 'none'; continue; }
-      const x = (tmp.x * 0.5 + 0.5) * innerWidth;
-      const y = (-tmp.y * 0.5 + 0.5) * innerHeight;
-      p.el.style.transform = 'translate(0,-100%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
-      const near = Math.max(0, Math.min(1, (14 - dist) / 6));
-      p.el.style.opacity = String(near * openT);
-      p.el.style.pointerEvents = near > 0.55 ? 'auto' : 'none';
+  /* hover / hold */
+  const hit = pick();
+  if (hit !== hovered) {
+    hovered = hit;
+    host.style.cursor = hit ? 'pointer' : '';
+    const cap = document.getElementById('pickcap');
+    if (cap) {
+      if (hit) {
+        cap.textContent = hit.kind === 'pouch' ? (hit.data.label + ' — OPEN')
+          : hit.kind === 'video' ? (hit.data.title + ' — ' + (hit.data.sub || '') + '  ↗')
+          : hit.data.caption;
+        cap.classList.add('on');
+      } else cap.classList.remove('on');
     }
+  }
+  for (const it of items) {
+    if (it.kind === 'pouch') continue;
+    const lifted = it === held;
+    const near = it === hovered && !held;
+    const tz = it.home.z + (lifted ? 0.9 : near ? 0.09 : 0);
+    const tsc = lifted ? 1.9 : near ? 1.06 : 1;
+    const trot = lifted ? 0 : it.rot;
+    it.mesh.position.z += (tz - it.mesh.position.z) * Math.min(1, dt * 7);
+    it.mesh.rotation.z += (trot - it.mesh.rotation.z) * Math.min(1, dt * 7);
+    const cs = it.mesh.scale.x + (tsc - it.mesh.scale.x) * Math.min(1, dt * 7);
+    it.mesh.scale.setScalar(cs);
   }
 
   renderer.render(scene, camera);

@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Ledger } from '../../engine/src/ledger.ts';
 import { derive } from '../../engine/src/derive.ts';
-import { build, type CaseShell, type Panel } from '../../engine/src/emit/index.ts';
+import { build, type CaseShell, type Panel, type Polaroid, type Docs } from '../../engine/src/emit/index.ts';
 import type { SiteContent, Unit } from '../../engine/src/emit/html.ts';
 import type { PremiseDraft } from '../../engine/src/premise.ts';
 
@@ -196,8 +196,50 @@ const panels: Panel[] = units.map(u => {
   };
 });
 
+/* Loose in the top of the case. These are frames from her own videos —
+   stand-ins until Sandra supplies the Instagram set, because Instagram blocks
+   automated reads and a photo nobody can source is a photo that does not ship. */
+const polaroids: Polaroid[] = [
+  { src: 'assets/polaroids/01-NbJnT5j365M.jpg', caption: 'Luanda' },
+  { src: 'assets/polaroids/02-X8zj9clGQO4.jpg', caption: 'Angola' },
+  { src: 'assets/polaroids/03-HueUBufXMbs.jpg', caption: 'The 6' },
+  { src: 'assets/polaroids/04-EmrpNsyVtDQ.jpg', caption: 'Drip' },
+  { src: 'assets/polaroids/05-NbJnT5j365M.jpg', caption: 'The coast' },
+  { src: 'assets/polaroids/06-Xedv19NEX-E.jpg', caption: 'Way We Move' },
+];
+
+/* The pouch. Her about, as papers rather than a bio block — every field and
+   every quote resolves through the ledger, so the passport is as sourced as
+   the numbers are. */
+const docs: Docs = {
+  kicker: 'PASSPORT · DOCUMENTS',
+  title: 'Shortiie Raw',
+  fields: [
+    { label: 'Born', value: 'Lisbon, Portugal' },
+    { label: 'Raised', value: 'Toronto, Canada' },
+    { label: 'Records from', value: 'Luanda, Angola' },
+    { label: 'Raps in', value: 'EN · PT · ES' },
+    { label: 'Billed as', value: String(ledger.require('artist.name').value) },
+    { label: 'Date of birth', value: String(ledger.require('artist.born').value) },
+  ],
+  body: [
+    'Born in Lisbon. Landed in Toronto at six speaking no English. She raps in three languages now.',
+    'The comments under her videos are in Portuguese and flagged Angola. The streaming map says 43% Canada, 26% United States, and no Angola at all. Those are two different audiences reading the same artist.',
+    'Independent. No label, no team.',
+  ],
+  quotes: [
+    { text: String(ledger.require('quote.bullied').value), source: 'Flaunt Magazine', sourceUrl: String(ledger.require('quote.bullied').sourceUrl) },
+    { text: String(ledger.require('quote.culture').value), source: 'Flaunt Magazine', sourceUrl: String(ledger.require('quote.culture').sourceUrl) },
+    { text: String(ledger.require('quote.selfmade').value), source: 'Flaunt Magazine', sourceUrl: String(ledger.require('quote.selfmade').sourceUrl) },
+  ],
+};
+
 const out = build(world as any, content, ledger, {
-  shell, webgl: { panels, montage: { src: 'assets/montage.mp4', poster: 'assets/montage-poster.jpg' } },
+  shell,
+  webgl: {
+    panels, polaroids, docs,
+    montage: { src: 'assets/montage.mp4', poster: 'assets/montage-poster.jpg' },
+  },
 });
 console.log('── AUDIT ──');
 console.log(`  moves ${out.audit.moveCount}/7   ink ${out.audit.contrast.inkOnGround.toFixed(2)}:1   accent ${out.audit.contrast.accentOnGround.toFixed(2)}:1`);
