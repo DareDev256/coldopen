@@ -211,3 +211,18 @@ test('the same fact flexes with separators in prose', () => {
   }, l);
   assert.ok(r.html.includes('326,075'));
 });
+
+/* ---------- ink is chosen by measurement, not by colour model ---------- */
+
+test('a saturated cobalt gets light ink, despite reporting HSL lightness > 0.5', () => {
+  // #1B2FE8 has HSL l = 0.51 (nominally "light") and relative luminance 0.08
+  // (genuinely dark). Deciding from lightness put black ink on it at 2.42:1.
+  const g = '#1B2FE8';
+  assert.ok(hsl(g).l > 0.5, 'precondition: HSL says light');
+  assert.ok(contrastRatio('#F2F5F8', g) > contrastRatio('#0C0D0F', g), 'white must win on cobalt');
+  assert.ok(contrastRatio('#F2F5F8', g) >= 4.5);
+});
+
+test('a genuinely light ground still gets dark ink', () => {
+  assert.ok(contrastRatio('#0C0D0F', '#FFFFFF') > contrastRatio('#F2F5F8', '#FFFFFF'));
+});

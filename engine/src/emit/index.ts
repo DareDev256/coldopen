@@ -1,10 +1,14 @@
 import { emitCSS } from './css.ts';
+import { emitSpatialCSS, type CaseShell } from './spatial.ts';
+import { emitSpatialHTML } from './spatial-html.ts';
+import { emitSpatialJS } from './spatial-js.ts';
 import { emitHTML, type SiteContent } from './html.ts';
 import { emitJS } from './js.ts';
 import { auditWorld, type World, type WorldAudit } from '../world.ts';
 import type { Ledger } from '../ledger.ts';
 
 export * from './html.ts';
+export * from './spatial.ts';
 
 export interface BuiltSite {
   readonly files: Record<string, string>;
@@ -53,15 +57,21 @@ export class BuildRefused extends Error {
  * Build the site. The audit runs BEFORE emission and refuses rather than
  * shipping a world that reads as a template — that refusal is the product.
  */
-export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boolean } = {}): BuiltSite {
-  const html = emitHTML(w, c, l);           // run first: it records ledger misses
+export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boolean; shell?: CaseShell } = {}): BuiltSite {
+  // Topology decides the emitter, not a flag. A spatial world is an OBJECT
+  // that opens; the others are documents. Same ledger, same rail, same
+  // SOURCES table underneath either way.
+  const spatial = !!opts.shell;
+  const html = spatial
+    ? emitSpatialHTML(w, c, l, opts.shell!)
+    : emitHTML(w, c, l);                    // run first: it records ledger misses
   const audit = auditWorld(w, l);
   if (!audit.ok && !opts.force) throw new BuildRefused(audit);
   return {
     files: {
       'index.html': html,
-      'css/style.css': emitCSS(w),
-      'js/main.js': emitJS(w),
+      'css/style.css': spatial ? emitSpatialCSS(w, opts.shell!) : emitCSS(w),
+      'js/main.js': spatial ? emitSpatialJS(w) : emitJS(w),
       'vercel.json': emitVercelJson(w),
       'robots.txt': `User-agent: *\nAllow: /\nSitemap: ${c.canonical.replace(/\/$/, '')}/sitemap.xml\n`,
       'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${c.canonical}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>\n</urlset>\n`,

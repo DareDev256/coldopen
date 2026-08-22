@@ -16,6 +16,8 @@ export interface PremiseDraft {
   readonly accent: string;
   readonly thresholdGesture: 'scroll' | 'hold' | 'drag' | 'press' | 'turn';
   readonly thresholdLabel: string;
+  /** what is on the other side, in this world's words. Falls back to topology. */
+  readonly thresholdReward?: string;
   /** the renamed sections — proves the world reached the copy */
   readonly lexicon: Record<string, string>;
   /** one line on why THIS artist, from THEIR answers. Cites the answer id. */

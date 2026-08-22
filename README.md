@@ -264,6 +264,13 @@ Written honestly, because a tool that oversells itself costs more than it saves.
 - **Ground media is not generated.** Full-bleed video is one of the seven moves
   and the engine wires it up, but somebody still has to shoot it.
 - **One page.** No multi-page routing, no store, no mailing list.
+- **CSS 3D is the wrong tool for a small detail.** The spatial topology's mirror
+  started as the lid's inner face on a 3D backface and could not be made to
+  render: past 90 degrees it was 26px of dark strip, and the angle that finally
+  gave it 94px pushed it off the top of the viewport. It now sits inside the
+  base where you would look down into it. The lesson generalises — if a detail
+  needs a swept parameter and a measurement loop to be visible at all, the
+  geometry is fighting you.
 - **The release path handles static HTML.** Sites where the markup is assembled
   by a framework at build time need their source patched, not their output.
 

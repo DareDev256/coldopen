@@ -10,7 +10,7 @@
 
 import type { PremiseDraft } from './premise.ts';
 import type { World, TypePair, Chrome, Threshold, Lexicon, Palette, Ground, Move } from './world.ts';
-import { hsl } from './world.ts';
+import { hsl, contrastRatio, luminance } from './world.ts';
 
 /**
  * Type follows topology, because topology is what the page has to DO.
@@ -68,16 +68,26 @@ const DWELL_BY_GESTURE: Record<Threshold['gesture'], number> = {
  * the accent doing exactly one job.
  */
 function payoffFor(ground: string, accent: string): string {
-  const g = hsl(ground);
-  if (g.l > 0.5) return '#0A0A0A';
+  // Decided by LUMINANCE, not HSL lightness. A saturated cobalt reports an HSL
+  // lightness of 0.51 — nominally "light" — while its relative luminance is
+  // 0.08, i.e. genuinely dark. Judging by lightness put black ink on a blue
+  // that needs white and produced 2.42:1.
+  if (luminance(ground) > 0.34) return '#0A0A0A';
   const a = hsl(accent);
   return a.h >= 20 && a.h <= 60 ? '#E8EEF5' : '#E6D9A8';
 }
 
+/**
+ * Pick the ink that actually reads, by measuring both candidates rather than
+ * guessing from a colour model. Whichever of near-black / near-white has more
+ * contrast against the ground wins — which is the same answer as "is this
+ * ground dark?", but arrived at by measurement, so saturated mid-hues cannot
+ * fool it.
+ */
 function inkFor(ground: string): { ink: string; muted: string } {
-  return hsl(ground).l > 0.5
-    ? { ink: '#0C0D0F', muted: 'rgba(12,13,15,.62)' }
-    : { ink: '#F2F5F8', muted: 'rgba(242,245,248,.58)' };
+  const dark = { ink: '#0C0D0F', muted: 'rgba(12,13,15,.66)' };
+  const light = { ink: '#F2F5F8', muted: 'rgba(242,245,248,.62)' };
+  return contrastRatio(dark.ink, ground) > contrastRatio(light.ink, ground) ? dark : light;
 }
 
 function slug(s: string): string { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
@@ -127,7 +137,7 @@ export function derive(i: DeriveInput): World {
   const threshold: Threshold = {
     gesture: p.thresholdGesture,
     label: p.thresholdLabel,
-    reward: REWARD_BY_TOPOLOGY[p.topology],
+    reward: p.thresholdReward ?? REWARD_BY_TOPOLOGY[p.topology],
     maxDwellMs: DWELL_BY_GESTURE[p.thresholdGesture],
   };
 
