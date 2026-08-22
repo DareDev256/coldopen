@@ -2,6 +2,9 @@ import { emitCSS } from './css.ts';
 import { emitSpatialCSS, type CaseShell } from './spatial.ts';
 import { emitSpatialHTML } from './spatial-html.ts';
 import { emitSpatialJS } from './spatial-js.ts';
+import { emitWebGLCSS, emitWebGLHTML, emitWebGLUIJS, type WebGLExtras } from './webgl.ts';
+import fs from 'node:fs';
+import path from 'node:path';
 import { emitHTML, type SiteContent } from './html.ts';
 import { emitJS } from './js.ts';
 import { auditWorld, type World, type WorldAudit } from '../world.ts';
@@ -9,6 +12,7 @@ import type { Ledger } from '../ledger.ts';
 
 export * from './html.ts';
 export * from './spatial.ts';
+export * from './webgl.ts';
 
 export interface BuiltSite {
   readonly files: Record<string, string>;
@@ -57,7 +61,8 @@ export class BuildRefused extends Error {
  * Build the site. The audit runs BEFORE emission and refuses rather than
  * shipping a world that reads as a template — that refusal is the product.
  */
-export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boolean; shell?: CaseShell } = {}): BuiltSite {
+export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boolean; shell?: CaseShell; webgl?: WebGLExtras } = {}): BuiltSite {
+  if (opts.webgl && opts.shell) return buildWebGL(w, c, l, opts.shell, opts.webgl, opts);
   // Topology decides the emitter, not a flag. A spatial world is an OBJECT
   // that opens; the others are documents. Same ledger, same rail, same
   // SOURCES table underneath either way.
@@ -76,6 +81,38 @@ export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boole
       'robots.txt': `User-agent: *\nAllow: /\nSitemap: ${c.canonical.replace(/\/$/, '')}/sitemap.xml\n`,
       'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${c.canonical}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>\n</urlset>\n`,
       'world.json': JSON.stringify({ world: w, ledger: l.toJSON(), content: c }, null, 2),
+    },
+    audit,
+  };
+}
+
+
+/**
+ * The rendered build. Three vendored files ride along so the page needs no CDN
+ * and the CSP stays script-src 'self' — a 3D hero is not worth loosening a
+ * content policy for.
+ */
+function buildWebGL(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: WebGLExtras, opts: { force?: boolean }): BuiltSite {
+  const html = emitWebGLHTML(w, c, l, shell, x);
+  const audit = auditWorld(w, l);
+  if (!audit.ok && !opts.force) throw new BuildRefused(audit);
+
+  const here = path.dirname(new URL(import.meta.url).pathname);
+  const runtime = path.resolve(here, '../../runtime');
+  const read = (p: string) => fs.readFileSync(path.join(runtime, p), 'utf8');
+
+  return {
+    files: {
+      'index.html': html,
+      'css/style.css': emitWebGLCSS(w, shell),
+      'js/ui.js': emitWebGLUIJS(w),
+      'js/scene.js': read('webgl-scene.js'),
+      'js/vendor/three.module.min.js': read('vendor/three.module.min.js'),
+      'js/vendor/three.core.min.js': read('vendor/three.core.min.js'),
+      'vercel.json': emitVercelJson(w),
+      'robots.txt': `User-agent: *\nAllow: /\nSitemap: ${c.canonical.replace(/\/$/, '')}/sitemap.xml\n`,
+      'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${c.canonical}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>\n</urlset>\n`,
+      'world.json': JSON.stringify({ world: w, ledger: l.toJSON(), content: c, shell, panels: x.panels }, null, 2),
     },
     audit,
   };

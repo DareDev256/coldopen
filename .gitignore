@@ -11,3 +11,9 @@ studio/public/preview/
 worlds/*/assets/*.jpg
 worlds/*/assets/*.png
 worlds/*/site/
+# Source footage is 444MB of the artist's own music videos, pulled by
+# make-clips.sh. Not redistributed here.
+worlds/*/footage/
+worlds/*/assets/clips/
+worlds/*/assets/montage.mp4
+worlds/*/assets/montage-poster.jpg

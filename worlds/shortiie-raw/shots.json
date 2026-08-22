@@ -1,0 +1,34 @@
+{
+  "_why": "The auto-picker snaps to the nearest cut at 38% duration, which is right most of the time and wrong in ways only a person can see: it cannot tell that a frame carries burned-in lyric captions, or that a better shot exists elsewhere. Overrides are per-id, with the reason, so the choice is reproducible rather than a hand-edit someone finds later and cannot explain.",
+  "overrides": {
+    "NbJnT5j365M": {
+      "start": 92.4,
+      "why": "aerial over the Luanda coast \u2014 the drone shot the whole premise rests on"
+    },
+    "X8zj9clGQO4": {
+      "start": 35.8,
+      "why": "aerial over the villa and pool; the auto pick landed on a lyric-caption section"
+    },
+    "z2BL7wgPsaI": {
+      "start": 1.6,
+      "why": "Peace is a lyric video with burned-in captions from ~10s, one carrying profanity, and no crop clears them. Its instrumental intro is caption-free and is the best footage in it: rooftop pool, tilted architecture, an aerial. Clip length is capped so it ends before the captions start."
+    },
+    "HueUBufXMbs": {
+      "start": 76.4,
+      "why": "the glass-corridor shot; the auto pick was a suggestive frame that should not be the panel poster"
+    },
+    "Xedv19NEX-E": {
+      "start": 74.8,
+      "why": "her and the crew in the Luanda street, which is what the record is about"
+    }
+  },
+  "posterOnly": {
+    "WLnquJAMnt0": "motion 0.0013 \u2014 this upload is a static cover-art card behind audio, not a music video. It keeps a panel, but it never gets a video texture."
+  },
+  "_crop": "Per-clip crop, as a fraction of height kept from the top. The default 0.87 clears most burned-in caption bands and baked letterboxing. 'Peace' is a lyric video whose captions sit higher than the default clears, and one of them carries profanity \u2014 a panel on the artist's own site must not ship someone else's caption track.",
+  "crop": {},
+  "len": {
+    "z2BL7wgPsaI": 7.4
+  },
+  "_len": "Per-clip length. Only set when a clip must END before something enters frame."
+}
