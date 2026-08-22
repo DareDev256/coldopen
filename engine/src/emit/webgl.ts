@@ -384,7 +384,7 @@ export interface Polaroid { readonly src: string; readonly caption: string; read
 export interface Docs {
   readonly kicker: string;
   readonly title: string;
-  readonly fields: readonly { label: string; value: string }[];
+  readonly fields: readonly { label: string; labelPt?: string; labelFr?: string; labelEs?: string; value: string }[];
   readonly body: readonly string[];
   readonly quotes: readonly { text: string; source: string; sourceUrl: string }[];
 }

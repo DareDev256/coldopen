@@ -24,6 +24,10 @@ export function emitSpatialJS(w: World): string {
      figure does not change language, and re-rendering one is how a translated
      site starts lying. */
   var REG = {}, base = {}, baseCode = 'en';
+  (function () {   // keep the original MRZ so the issuing state can be re-templated
+    var m = document.getElementById('pp-mrz');
+    if (m) m.dataset.pt = m.innerHTML;
+  })();
   var regEl = document.getElementById('registers');
   if (regEl) {
     try { REG = JSON.parse(regEl.textContent || '{}'); } catch (e) {}
@@ -51,6 +55,14 @@ export function emitSpatialJS(w: World): string {
       else if (k.indexOf('lex.') === 0 && r.lexicon && r.lexicon[k.slice(4)]) n.textContent = r.lexicon[k.slice(4)];
       else n.innerHTML = base[k];
     });
+    /* the passport follows the language: born under one, raised under another */
+    var pp = document.getElementById('pp');
+    if (pp) pp.setAttribute('data-book', code);
+    var mrz = document.getElementById('pp-mrz');
+    if (mrz && mrz.dataset.pt) {
+      var iso = code === 'en' ? 'CAN' : code === 'es' ? 'DOM' : 'PRT';
+      mrz.innerHTML = mrz.dataset.pt.replace(/PRT/g, iso);
+    }
     try { localStorage.setItem('co-register', code); } catch (e) {}
   }
 
@@ -136,8 +148,57 @@ export function emitSpatialJS(w: World): string {
   document.querySelectorAll('.panel').forEach(function (n) {
     n.addEventListener('click', function (e) { if (e.target === n || e.target.dataset.close !== undefined) closePanels(); });
   });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanels(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    // the player sits above the panels, so Escape dismisses the top one only
+    var pl = document.getElementById('player');
+    if (pl && pl.classList.contains('open')) return;
+    closePanels();
+  });
   window.__coldopenPanel = openPanel;
+
+  /* ---------- the player ----------
+     A record opens IN the case. Sending someone to YouTube sends them off her
+     site to a page that recommends somebody else's record next; the link out
+     stays, under the player, as a choice rather than the only route. */
+  var player = document.getElementById('player');
+  var plIf = document.getElementById('pl-if');
+  var plT = document.getElementById('pl-t');
+  var plYt = document.getElementById('pl-yt');
+  function openPlayer(id, title, sub) {
+    if (!player || !id) return false;
+    closePanels();
+    plIf.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
+    plT.innerHTML = title + (sub ? '<span>' + sub + '</span>' : '');
+    plYt.href = 'https://www.youtube.com/watch?v=' + id;
+    player.classList.add('open'); player.setAttribute('aria-hidden', 'false');
+    var a = document.getElementById('bed');
+    if (a && !a.paused) { a.pause(); setSound(false); }     // two things playing at once is nobody's idea
+    return true;
+  }
+  function closePlayer() {
+    if (!player) return;
+    player.classList.remove('open'); player.setAttribute('aria-hidden', 'true');
+    plIf.src = '';                                          // stop the audio, do not just hide it
+  }
+  document.querySelectorAll('[data-yt]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var id = a.getAttribute('data-yt');
+      if (!id) return;                                      // no id parsed: let the link do its job
+      e.preventDefault();
+      openPlayer(id, a.getAttribute('data-title') || '', a.getAttribute('data-sub') || '');
+    });
+  });
+  if (player) {
+    player.addEventListener('click', function (e) {
+      if (e.target === player || e.target.hasAttribute('data-close-player')) closePlayer();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePlayer(); });
+  }
+
+  /* ---------- the other bag ---------- */
+  var bag = document.getElementById('bag');
+  if (bag) bag.addEventListener('click', function () { openPanel('more'); });
 
   /* ---------- reveals + count-up ---------- */
   var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {

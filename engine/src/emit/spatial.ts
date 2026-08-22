@@ -476,6 +476,162 @@ p + p{ margin-top:1rem }
 .form-msg.ok{ color:#1B7A3E } .form-msg.err{ color:#B4181F }
 
 /* =========================================================
+   5b-ii · THE PASSPORT
+   Built to the Portuguese book, because that is the one she was born under:
+   EU burgundy, gold arms, trilingual field labels stacked PT / EN / FR, a
+   guilloche data page and an MRZ across the bottom. The generic cream document
+   it replaced said nothing about anyone.
+
+   It is a design device, not a facsimile of an issued document: where a
+   passport number would sit it carries this site's own reference code, and the
+   header says TRAVEL DOCUMENT rather than claiming to be a passport.
+   ========================================================= */
+.pp{ width:min(100%,880px); max-height:88svh; overflow:auto; border-radius:4px;
+  box-shadow:0 30px 80px ${alpha('#000000', 0.7)}; }
+/* THE BOOK FOLLOWS THE LANGUAGE.
+   Portuguese is the one she was born under, Canadian the one she was raised
+   under, and the Spanish register carries the Dominican book. Each is its own
+   real palette — EU burgundy, Canadian navy, Dominican blue — because "a
+   passport" in the abstract is exactly the generic document this replaced. */
+.pp-cover{ position:relative; padding:clamp(1.4rem,4vw,2.4rem);
+  background:linear-gradient(158deg,#6E1220,#4A0A15 62%,#33060E); color:#D8B45E; }
+.pp[data-book="en"] .pp-cover{ background:linear-gradient(158deg,#22375E,#16233D 62%,#0D1626); color:#C9A227 }
+.pp[data-book="es"] .pp-cover{ background:linear-gradient(158deg,#123E7A,#0C2B55 62%,#071B37); color:#D4AF37 }
+.pp-cover::before{ content:""; position:absolute; inset:12px; border:1px solid currentColor;
+  opacity:.4; border-radius:2px; pointer-events:none }
+/* only the book in play is shown */
+.pp-book{ display:none } .pp[data-book="pt"] .pp-book--pt{ display:block }
+.pp[data-book="en"] .pp-book--en{ display:block } .pp[data-book="es"] .pp-book--es{ display:block }
+.pp-f em .lb{ display:none } .pp[data-book="pt"] .lb--pt{ display:inline }
+.pp[data-book="en"] .lb--en{ display:inline } .pp[data-book="es"] .lb--es{ display:inline }
+.pp-eu{ font-family:var(--f-mono); font-size:.56rem; letter-spacing:.36em; text-transform:uppercase;
+  text-align:center; opacity:.86 }
+.pp-arms{ display:block; width:clamp(52px,7vw,74px); margin:.9rem auto .7rem }
+.pp-country{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase; text-align:center;
+  font-size:clamp(.9rem,2.4vw,1.35rem); letter-spacing:.12em; line-height:1.2 }
+.pp-kind{ font-family:var(--f-mono); font-size:.6rem; letter-spacing:.42em; text-transform:uppercase;
+  text-align:center; margin-top:.6rem; opacity:.9 }
+.pp-chip{ display:block; width:22px; height:16px; margin:.9rem auto 0; border-radius:2px;
+  border:1px solid ${alpha('#D8B45E', 0.55)}; position:relative }
+.pp-chip::after{ content:""; position:absolute; inset:3px 5px; border-left:1px solid ${alpha('#D8B45E', 0.55)};
+  border-right:1px solid ${alpha('#D8B45E', 0.55)} }
+
+/* the data page */
+.pp-page{ position:relative; background:#EFEDE2; color:#1A1721; padding:clamp(1.2rem,3.4vw,2rem); }
+.pp[data-book="en"]{ --pp-guilloche:rgba(34,55,94,.13) }
+.pp[data-book="es"]{ --pp-guilloche:rgba(18,62,122,.13) }
+/* guilloche: the fine interference pattern that makes a page hard to copy */
+.pp-page::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background:
+    repeating-radial-gradient(circle at 20% 40%, transparent 0 6px, var(--pp-guilloche, rgba(110,18,32,.12)) 6px 6.6px),
+    repeating-radial-gradient(circle at 78% 62%, transparent 0 7px, rgba(24,58,110,.1) 7px 7.6px),
+    repeating-linear-gradient(58deg, transparent 0 5px, rgba(26,23,33,.05) 5px 5.5px); }
+.pp-grid{ position:relative; z-index:1; display:grid; grid-template-columns:auto 1fr; gap:clamp(.9rem,2.4vw,1.5rem) }
+@media (max-width:620px){ .pp-grid{ grid-template-columns:1fr } }
+.pp-photo{ width:clamp(108px,15vw,152px); aspect-ratio:3/4; object-fit:cover; filter:grayscale(.25) contrast(1.05);
+  border:1px solid ${alpha('#1A1721', 0.28)} }
+.pp-photo-wrap{ position:relative }
+.pp-ghost{ position:absolute; right:-14px; bottom:-6px; width:52%; opacity:.28; filter:grayscale(1) }
+.pp-fields{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.7rem 1.1rem; align-content:start }
+.pp-f{ min-width:0 }
+.pp-f em{ display:block; font-style:normal; font-family:var(--f-mono); font-size:.42rem; letter-spacing:.14em;
+  text-transform:uppercase; color:#7A2634; line-height:1.55 }
+.pp[data-book="en"] .pp-f em,.pp[data-book="en"] .pp-note{ color:#2B4372 }
+.pp[data-book="es"] .pp-f em,.pp[data-book="es"] .pp-note{ color:#123E7A }
+.pp[data-book="en"] .pp-story .doc-q{ border-left-color:#22375E }
+.pp[data-book="es"] .pp-story .doc-q{ border-left-color:#123E7A }
+.pp[data-book="en"] .pp-story .doc-q cite a{ color:#22375E }
+.pp[data-book="es"] .pp-story .doc-q cite a{ color:#123E7A }
+.pp-f b{ display:block; font-family:var(--f-mono); font-weight:700; font-size:clamp(.76rem,1.5vw,.9rem);
+  letter-spacing:.04em; color:#14121A; margin-top:.16rem; overflow-wrap:anywhere }
+.pp-sig{ grid-column:1/-1; margin-top:.4rem; border-top:1px solid ${alpha('#1A1721', 0.2)}; padding-top:.7rem;
+  font-family:'Instrument Serif', Georgia, serif; font-style:italic; font-size:1.25rem; color:#2A2436 }
+.pp-mrz{ position:relative; z-index:1; margin-top:clamp(1rem,2.6vw,1.6rem); padding-top:.8rem;
+  border-top:1px dashed ${alpha('#1A1721', 0.35)};
+  font-family:'Courier New', ui-monospace, monospace; font-weight:700;
+  font-size:clamp(.6rem,1.5vw,.86rem); letter-spacing:.12em; color:#14121A; white-space:nowrap;
+  overflow-x:auto; line-height:1.7 }
+.pp-note{ position:relative; z-index:1; margin-top:1rem; font-family:var(--f-mono); font-size:.46rem;
+  letter-spacing:.14em; text-transform:uppercase; color:#7A2634 }
+
+/* the story pages, on passport stock */
+.pp-story{ background:#E7E4D8; color:#1A1721; padding:clamp(1.2rem,3.4vw,2rem) }
+.pp-story p{ color:#2A2733; max-width:58ch; font-size:clamp(.94rem,1.5vw,1.02rem); line-height:1.72 }
+.pp-story p + p{ margin-top:.8rem }
+.pp-story .doc-q{ border-left:3px solid #6E1220 }
+.pp-story .doc-q cite a{ color:#6E1220 }
+
+/* =========================================================
+   5c · THE PLAYER
+   A video opens IN the case, not in a new tab. Sending someone to YouTube is
+   sending them away from her site to a page that will recommend somebody
+   else's record next; the link out stays, as a choice, under the player.
+   ========================================================= */
+#player{ position:fixed; inset:0; z-index:130; display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:.9rem; padding:var(--gut);
+  background:${alpha('#04050A', 0.94)}; backdrop-filter:blur(12px);
+  opacity:0; visibility:hidden; pointer-events:none; transition:opacity .3s ease, visibility .3s; }
+#player.open{ opacity:1; visibility:visible; pointer-events:auto; }
+.pl-frame{ position:relative; width:min(100%,1100px); aspect-ratio:16/9; background:#000;
+  box-shadow:0 30px 90px ${alpha('#000000', 0.7)}, 0 0 0 1px ${alpha(accent, 0.34)}; }
+.pl-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+.pl-bar{ width:min(100%,1100px); display:flex; align-items:baseline; justify-content:space-between;
+  gap:1rem; flex-wrap:wrap; }
+.pl-t{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase; letter-spacing:-.01em;
+  font-size:clamp(1rem,2.4vw,1.5rem); color:var(--ink); }
+.pl-t span{ display:block; font-family:var(--f-mono); font-size:.56rem; letter-spacing:.2em;
+  color:var(--muted); font-weight:400; margin-top:.3rem; }
+.pl-acts{ display:flex; gap:.5rem; flex-wrap:wrap; }
+.pl-acts a,.pl-acts button{ font-family:var(--f-mono); font-size:.58rem; letter-spacing:.22em;
+  text-transform:uppercase; text-decoration:none; cursor:pointer;
+  border:1px solid var(--accent-line); background:none; color:var(--ink); padding:.6rem .9rem; }
+.pl-acts a:hover,.pl-acts button:hover{ border-color:var(--accent); color:var(--accent); }
+
+/* =========================================================
+   5d · THE HANDBAG — the deep cuts
+   A second bag, in her own monogram. RAW is her mark (her X bio is literally
+   "RAW®"), so the canvas is that word repeated rather than someone else's
+   initials. It holds what did not fit in the carry-on: the 2013 uploads, the
+   features on other people's channels, the audio-only releases.
+   ========================================================= */
+.bag{ position:relative; display:block; border:0; cursor:pointer; padding:0;
+  width:clamp(112px,15vw,168px); background:none; margin:clamp(1rem,3vh,2rem) auto 0; }
+.bag-body{ position:relative; display:block; aspect-ratio:5/4; border-radius:5px 5px 9px 9px; overflow:hidden;
+  background:
+    /* the monogram, drawn not shipped */
+    url("data:image/svg+xml;utf8,${encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='108' height='72'>
+        <g fill='${payoff}' fill-opacity='0.72' font-family='Anton, Impact, sans-serif' font-weight='900' font-size='19' letter-spacing='1'>
+          <text x='4' y='22'>RAW</text><text x='58' y='22'>RAW</text>
+          <text x='31' y='52'>RAW</text><text x='85' y='52'>RAW</text>
+        </g>
+        <g fill='${accent}' fill-opacity='0.5'>
+          <circle cx='52' cy='14' r='2.4'/><circle cx='106' cy='14' r='2.4'/>
+          <circle cx='25' cy='44' r='2.4'/><circle cx='79' cy='44' r='2.4'/>
+        </g>
+      </svg>`)}"),
+    linear-gradient(168deg, #2B1D12, #150E08 78%);
+  background-size:clamp(58px,7.5vw,84px) auto, cover;
+  box-shadow:inset 0 1px 0 ${alpha('#ffffff', 0.16)}, 0 12px 26px ${alpha('#000000', 0.6)};
+  transition:transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s; }
+.bag:hover .bag-body,.bag:focus-visible .bag-body{ transform:translateY(-5px) rotate(-1.2deg);
+  box-shadow:inset 0 1px 0 ${alpha('#ffffff', 0.2)}, 0 20px 36px ${alpha('#000000', 0.7)}; }
+.bag:focus-visible{ outline:none }
+/* the rolled top handles */
+.bag-h{ position:absolute; top:-26%; left:50%; transform:translateX(-50%); width:52%; height:34%;
+  border:5px solid #5A3B22; border-bottom:0; border-radius:50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow:0 2px 5px ${alpha('#000000', 0.5)}; }
+/* the clasp */
+.bag-c{ position:absolute; z-index:2; top:38%; left:50%; transform:translateX(-50%);
+  width:26%; height:16%; border-radius:2px;
+  background:linear-gradient(180deg, ${payoff}, ${alpha(payoff, 0.5)});
+  box-shadow:0 2px 5px ${alpha('#000000', 0.55)}, inset 0 1px 0 ${alpha('#ffffff', 0.6)}; }
+.bag-lab{ display:block; margin-top:.5rem; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--accent); text-align:center; }
+.bag-lab b{ display:block; color:var(--ink); font-family:var(--f-disp); font-weight:900;
+  font-size:.72rem; letter-spacing:.02em; margin-bottom:.16rem; }
+
+/* =========================================================
    6 · CHROME
    ========================================================= */
 .hud{ position:fixed; z-index:60; font-family:var(--f-mono); font-size:var(--hud); letter-spacing:.24em;

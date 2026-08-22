@@ -179,13 +179,16 @@ const content: SiteContent = {
 const docs: Docs = {
   kicker: 'PASSPORT · DOCUMENTS',
   title: 'Shortiie Raw',
+  /* Field labels stacked PT / EN, the way the Portuguese book prints them. */
+  /* Field labels in the pairing each book actually prints: PT/EN for the
+     Portuguese, EN/FR for the Canadian, ES/EN for the Dominican. */
   fields: [
-    { label: 'Born', value: 'Lisbon, Portugal' },
-    { label: 'Raised', value: 'Toronto, Canada' },
-    { label: 'Records from', value: 'Luanda, Angola' },
-    { label: 'Raps in', value: 'EN · PT · ES' },
-    { label: 'Billed as', value: String(ledger.require('artist.name').value) },
-    { label: 'Date of birth', value: String(ledger.require('artist.born').value) },
+    { labelPt: 'Apelido / Nome', labelFr: 'Nom', labelEs: 'Apellido / Nombre', label: 'Name', value: String(ledger.require('artist.name').value) },
+    { labelPt: 'Local de nascimento', labelFr: 'Lieu de naissance', labelEs: 'Lugar de nacimiento', label: 'Place of birth', value: 'Lisboa, Portugal' },
+    { labelPt: 'Data de nascimento', labelFr: 'Date de naissance', labelEs: 'Fecha de nacimiento', label: 'Date of birth', value: String(ledger.require('artist.born').value) },
+    { labelPt: 'Residência', labelFr: 'Résidence', labelEs: 'Residencia', label: 'Residence', value: 'Toronto, Canada' },
+    { labelPt: 'Grava em', labelFr: 'Enregistre à', labelEs: 'Graba en', label: 'Records from', value: 'Luanda, Angola' },
+    { labelPt: 'Línguas', labelFr: 'Langues', labelEs: 'Idiomas', label: 'Languages', value: 'PT · EN · ES' },
   ],
   body: [
     'Born in Lisbon. Landed in Toronto at six speaking no English. She raps in three languages now.',
@@ -208,11 +211,32 @@ const feed: FeedPost[] = [
   { id: 'CqiijQ8ug_N', caption: '#photodump', comments: 75 },
 ];
 
+/* What did not fit in the carry-on: the 2013 uploads, the features living on
+   other people's channels, and the audio-only releases. Verified present on
+   YouTube 2026-08-21; view counts are from that read. */
+const deepCuts = [
+  { title: 'Slaughter', sub: 'ft. Jason Packs · 2013 · 24,431', href: 'https://www.youtube.com/watch?v=ii_AKDGHAFA', image: 'assets/clips/ii_AKDGHAFA.jpg' },
+  { title: 'Panda Freestyle', sub: 'on 6ixBuzz Premieres · 18,819', href: 'https://www.youtube.com/watch?v=d7DqCGOxxpI', image: 'assets/clips/d7DqCGOxxpI.jpg' },
+  { title: 'Knockout', sub: 'on HAM Toronto · 2014 · 9,859', href: 'https://www.youtube.com/watch?v=3af1plSKe6M', image: 'assets/clips/3af1plSKe6M.jpg' },
+  { title: 'Dess', sub: '2025 · 2,572', href: 'https://www.youtube.com/watch?v=YfPCjexMP18', image: 'assets/clips/YfPCjexMP18.jpg' },
+  { title: 'Drip', sub: 'audio · 30,824', href: 'https://www.youtube.com/watch?v=F5K3XSy-iMA', image: 'assets/clips/F5K3XSy-iMA.jpg' },
+  { title: 'A1 Perico', sub: 'audio · 4,914', href: 'https://www.youtube.com/watch?v=ZXgPDKefSkU', image: 'assets/clips/ZXgPDKefSkU.jpg' },
+  { title: 'Time or Day', sub: 'audio · 4,127', href: 'https://www.youtube.com/watch?v=L0nwhXZnF5g', image: 'assets/clips/L0nwhXZnF5g.jpg' },
+];
+
+/* The machine-readable zone, to ICAO 9303 shape. The document-number field
+   carries this site's own reference code, not a passport number — the page is
+   a design device and says so under the MRZ. */
+const mrz: [string, string] = [
+  'P<PRTSHORTIIE<<RAW<<<<<<<<<<<<<<<<<<<<<<<<<<',
+  'SHORCA264734PRT9403284F<<<<<<<CARRYON<<<<<<0',
+];
+
 const out = build(world as any, content, ledger, {
   shell,
   spatial: {
     montage: { src: 'assets/montage.mp4', poster: 'assets/montage-poster.jpg' },
-    docs, feed, igHandle: 'shortiieraw',
+    docs, feed, igHandle: 'shortiieraw', deepCuts, mrz,
   },
 });
 console.log('── AUDIT ──');

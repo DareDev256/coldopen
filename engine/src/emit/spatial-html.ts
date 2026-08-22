@@ -4,6 +4,8 @@ import type { SiteContent } from './html.ts';
 import type { CaseShell } from './spatial.ts';
 import type { Docs, FeedPost } from './webgl.ts';
 
+/** the id out of a watch URL, so a tile can open in-page instead of leaving */
+const ytId = (href: string) => (/[?&]v=([A-Za-z0-9_-]{6,})/.exec(href)?.[1] ?? '');
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 function figure(l: Ledger, id: string): string {
@@ -30,6 +32,10 @@ const LANG_NAME: Record<string, string> = {
 };
 
 export interface SpatialExtras {
+  /** what did not fit in the carry-on */
+  readonly deepCuts?: readonly { title: string; sub?: string; href: string; image: string }[];
+  /** the two MRZ lines, rendered verbatim */
+  readonly mrz?: readonly [string, string];
   readonly montage?: { src: string; poster: string };
   readonly docs?: Docs;
   readonly feed?: readonly FeedPost[];
@@ -126,7 +132,7 @@ ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-
         <div class="packed">
           <span class="strap h" aria-hidden="true"></span>
           <span class="strap buckle" aria-hidden="true"></span>
-${c.units.slice(0, backFrom).map(u => `          <a class="item" href="${esc(u.href)}" target="_blank" rel="noopener">
+${c.units.slice(0, backFrom).map(u => `          <a class="item" href="${esc(u.href)}" data-yt="${esc(ytId(u.href))}" data-title="${esc(u.title)}" data-sub="${esc(u.sub ?? '')}">
             <img src="${esc(u.image)}" alt="${esc(u.title)}" />
             <span class="item-t"><b>${esc(u.title)}</b>${u.sub ? `<i>${esc(u.sub)}</i>` : ''}</span>
           </a>`).join('\n')}
@@ -163,7 +169,7 @@ ${shell.stamps.slice(2).map((s, i) => `        <span class="stamp" style="top:${
       <div class="face in">
         <div class="lid-in-wrap">
           <p class="lid-lab">${esc(shell.trays[shell.trays.length - 1]?.label ?? 'KEPT')}</p>
-${c.units.slice(backFrom).map((u) => `          <a class="slot" href="${esc(u.href)}" target="_blank" rel="noopener">
+${c.units.slice(backFrom).map((u) => `          <a class="slot" href="${esc(u.href)}" data-yt="${esc(ytId(u.href))}" data-title="${esc(u.title)}" data-sub="${esc(u.sub ?? '')}">
             <img src="${esc(u.image)}" alt="${esc(u.title)}" loading="lazy" decoding="async" />
             <span class="slot-t"><b>${esc(u.title)}</b>${u.sub ? `<i>${esc(u.sub)}</i>` : ''}</span>
           </a>`).join('\n')}
@@ -191,22 +197,113 @@ ${regs.map(r => `    <button class="tag" data-reg="${esc(r.code)}" aria-label="$
       </span>
     </button>`).join('\n')}
   </div>` : ''}
+${(x.deepCuts?.length ?? 0) > 0 ? `  <!-- the second bag: what did not fit in the carry-on -->
+  <button class="bag" id="bag" type="button" aria-label="More of her catalogue">
+    <span class="bag-h" aria-hidden="true"></span>
+    <span class="bag-body"><span class="bag-c" aria-hidden="true"></span></span>
+    <span class="bag-lab"><b>SEE MORE</b>${esc(x.deepCuts!.length)} more in the bag</span>
+  </button>` : ''}
   <p class="hint mono" id="hint">${esc(w.threshold.reward)} ↓</p>
 </div>
+
+<!-- the player. A record opens here, not on somebody else's site. -->
+<div id="player" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Video">
+  <div class="pl-frame"><iframe id="pl-if" title="Video" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+  <div class="pl-bar">
+    <p class="pl-t" id="pl-t"></p>
+    <span class="pl-acts">
+      <a id="pl-yt" href="#" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+      <a id="pl-sp" href="${esc(String(l.get('link.spotify')?.value ?? ''))}" target="_blank" rel="noopener">Stream on Spotify ↗</a>
+      <button type="button" data-close-player>Close ✕</button>
+    </span>
+  </div>
+</div>
+
+${(x.deepCuts?.length ?? 0) > 0 ? `<!-- the handbag's contents: the deep cuts -->
+<div id="panel-more" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="More">
+  <div class="doc doc--wide">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>THE OTHER BAG · RAW®</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3>Everything Else</h3>
+    <p>The early uploads, the features that live on other people's channels, and the audio-only releases. All of it hers; none of it fits in a carry-on.</p>
+    <div class="slots" style="--n:3">
+${(x.deepCuts ?? []).map((u, i) => `      <a class="slot" href="${esc(u.href)}" data-yt="${esc(ytId(u.href))}" data-title="${esc(u.title)}" data-sub="${esc(u.sub ?? '')}">
+        <img src="${esc(u.image)}" alt="${esc(u.title)}" loading="lazy" decoding="async" />
+        <span class="slot-n mono">${String(i + 1).padStart(2, '0')}</span>
+        <span class="slot-t"><b>${esc(u.title)}</b>${u.sub ? `<i>${esc(u.sub)}</i>` : ''}</span>
+      </a>`).join('\n')}
+    </div>
+  </div>
+</div>` : ''}
 
 <!-- ============================================================
      THE PAPERWORK. One shell, different paper.
      ============================================================ -->
-<div id="panel-docs" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(x.docs?.title ?? 'Documents')}">
-  <div class="doc">
-    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
-    <div class="doc-h"><span>${esc(x.docs?.kicker ?? 'PASSPORT')}</span><span>${esc(w.chrome.docCode)}</span></div>
-    <h3>${esc(x.docs?.title ?? w.artist)}</h3>
-    <div class="doc-fields">
-${(x.docs?.fields ?? []).map(f => `      <div class="doc-f"><b>${esc(f.value)}</b><span>${esc(f.label)}</span></div>`).join('\n')}
+<div id="panel-docs" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Travel document">
+  <div class="pp" id="pp" data-book="en">
+    <button class="doc-x mono" data-close aria-label="Close" style="color:currentColor">CLOSE ✕</button>
+
+    <!-- THREE BOOKS, ONE PER REGISTER.
+         Portuguese is the one she was born under, Canadian the one she was
+         raised under, and the Spanish register carries the Dominican book. -->
+    <div class="pp-cover">
+      <div class="pp-book pp-book--pt">
+        <p class="pp-eu">União Europeia · European Union</p>
+        <svg class="pp-arms" viewBox="0 0 60 74" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M30 3c14 0 22 7 22 7v34c0 16-13 24-22 27C21 68 8 60 8 44V10s8-7 22-7z"/>
+          <path d="M30 14c8 0 13 4 13 4v22c0 10-8 15-13 17-5-2-13-7-13-17V18s5-4 13-4z" stroke-width="1.6"/>
+          <g stroke-width="1.2"><path d="M30 22v22M22 27v12M38 27v12"/></g>
+        </svg>
+        <p class="pp-country">República Portuguesa</p>
+        <p class="pp-kind">Documento de Viagem · Travel Document</p>
+      </div>
+      <div class="pp-book pp-book--en">
+        <p class="pp-eu">Canada</p>
+        <svg class="pp-arms" viewBox="0 0 60 74" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M30 5l4 9 5-3-2 10 9-2-4 8 8 3-8 5 4 8-9-2 1 9-8-6-8 6 1-9-9 2 4-8-8-5 8-3-4-8 9 2-2-10 5 3z"/>
+          <path d="M30 55v13" stroke-width="1.6"/>
+        </svg>
+        <p class="pp-country">Canada</p>
+        <p class="pp-kind">Passport · Passeport</p>
+      </div>
+      <div class="pp-book pp-book--es">
+        <p class="pp-eu">Comunidad del Caribe</p>
+        <svg class="pp-arms" viewBox="0 0 60 74" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M30 4c13 0 21 6 21 6v33c0 16-12 24-21 27C21 67 9 59 9 43V10s8-6 21-6z"/>
+          <path d="M30 18v26M19 31h22" stroke-width="2.2"/>
+          <path d="M18 48h24l-3 6H21z" stroke-width="1.4"/>
+        </svg>
+        <p class="pp-country">República Dominicana</p>
+        <p class="pp-kind">Pasaporte · Passport</p>
+      </div>
+      <span class="pp-chip" aria-hidden="true"></span>
     </div>
-${(x.docs?.body ?? []).map(p => `    <p>${esc(p)}</p>`).join('\n')}
-${(x.docs?.quotes ?? []).map(q => `    <blockquote class="doc-q">${esc(q.text)}<cite><a href="${esc(q.sourceUrl)}" target="_blank" rel="noopener">${esc(q.source)} ↗</a></cite></blockquote>`).join('\n')}
+
+    <!-- the data page -->
+    <div class="pp-page">
+      <div class="pp-grid">
+        <div class="pp-photo-wrap">
+          <img class="pp-photo" src="${esc(shell.mirror)}" alt="${esc(w.artist)}" />
+          <img class="pp-ghost" src="${esc(shell.mirror)}" alt="" aria-hidden="true" />
+        </div>
+        <div class="pp-fields">
+${(x.docs?.fields ?? []).map(f => `          <div class="pp-f"><em>
+            <span class="lb lb--pt">${esc(f.labelPt ?? f.label)} / ${esc(f.label)}</span>
+            <span class="lb lb--en">${esc(f.label)} / ${esc(f.labelFr ?? f.label)}</span>
+            <span class="lb lb--es">${esc(f.labelEs ?? f.label)} / ${esc(f.label)}</span>
+          </em><b>${esc(f.value)}</b></div>`).join('\n')}
+          <p class="pp-sig">${esc(w.artist.toLowerCase().replace(/\b\w/g, (m: string) => m.toUpperCase()))}</p>
+        </div>
+      </div>
+      <p class="pp-mrz" id="pp-mrz">${esc(x.mrz?.[0] ?? '')}<br />${esc(x.mrz?.[1] ?? '')}</p>
+      <p class="pp-note">Reference ${esc(w.chrome.docCode)} · this page is a design device, not an issued document</p>
+    </div>
+
+    <!-- the pages after the data page -->
+    <div class="pp-story">
+${(x.docs?.body ?? []).map(p => `      <p>${esc(p)}</p>`).join('\n')}
+${(x.docs?.quotes ?? []).map(q => `      <blockquote class="doc-q">${esc(q.text)}<cite><a href="${esc(q.sourceUrl)}" target="_blank" rel="noopener">${esc(q.source)} ↗</a></cite></blockquote>`).join('\n')}
+    </div>
   </div>
 </div>
 
