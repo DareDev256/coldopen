@@ -70,12 +70,12 @@ const world = {
   // 'artist.languages', never as decoration.
   registers: [
     { code: 'en', label: 'EN', evidenceId: 'artist.languages', lexicon: {}, logline: premise.logline, story: [],
-      prompt: '<b>CHOOSE YOUR TAG</b> — IT OPENS THE CASE' },
+      prompt: '<b>CHOOSE YOUR TAG</b> — IT OPENS THE CASE · THEN SCROLL DOWN' },
     {
       code: 'pt', label: 'PT', evidenceId: 'artist.languages',
       logline: 'Tudo o que ela levou entre três países, numa só mala. Levanta a tampa.',
       mirrorCaption: 'Lisboa · Toronto · Luanda',
-      prompt: '<b>ESCOLHE A TUA ETIQUETA</b> — ABRE A MALA',
+      prompt: '<b>ESCOLHE A TUA ETIQUETA</b> — ABRE A MALA · DEPOIS DESCE',
       lexicon: {
         enter: 'ABRE A MALA', catalogue: 'O QUE VAI DENTRO', story: 'DECLARADO',
         proof: 'QUANTO PESA', contact: 'QUEM PERGUNTA', latest: 'ÚLTIMO A ENTRAR',
@@ -91,7 +91,7 @@ const world = {
       code: 'es', label: 'ES', evidenceId: 'artist.languages',
       logline: 'Todo lo que se llevó entre tres países, en una sola maleta. Levanta la tapa.',
       mirrorCaption: 'Lisboa · Toronto · Luanda',
-      prompt: '<b>ELIGE TU ETIQUETA</b> — ABRE LA MALETA',
+      prompt: '<b>ELIGE TU ETIQUETA</b> — ABRE LA MALETA · LUEGO BAJA',
       lexicon: {
         enter: 'ABRE LA MALETA', catalogue: 'LO QUE LLEVA', story: 'DECLARADO',
         proof: 'CUÁNTO PESA', contact: 'QUIÉN PREGUNTA', latest: 'LO ÚLTIMO EN ENTRAR',
@@ -236,10 +236,11 @@ const docs: Docs = {
 
 /* Her Instagram, ranked by comment count, read from Instagram's own embed
    endpoint on 2026-08-21. Only posts owned by @shortiieraw — the search also
-   surfaced fan and repost accounts, and someone else's repost is not her feed. */
+   surfaced fan and repost accounts, and someone else's repost is not her feed.
+   DbBZ-fgR_nR (132 comments) ranked second and is pulled at James's request —
+   it is about their wedding and that is a personal post, not a promo asset. */
 const feed = [
   { id: 'CZr3NgclTAj', caption: "I'm going to miss it here", comments: 149 },
-  { id: 'DbBZ-fgR_nR', caption: 'Hair and make up appreciation post', comments: 132 },
   { id: 'CFZ7NNApL3N', caption: 'Fire — in-studio performance', comments: 109 },
   { id: 'CqiijQ8ug_N', caption: '#photodump', comments: 75 },
 ];

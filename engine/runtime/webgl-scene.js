@@ -190,7 +190,7 @@ const goldMat = new THREE.MeshStandardMaterial({ color: PAL.payoff, metalness: 1
    inside it. 4.6 deep put the camera two metres off the back wall and every
    screen filled the frame. The RATIO is the object; the scale is so a person
    can stand in it. */
-const ROOM_W = 10.4, ROOM_H = 5.4, ROOM_D = 7.0;
+const ROOM_W = 10.4, ROOM_H = 6.0, ROOM_D = 7.0;
 const CASE_W = 2.35, CASE_H = 3.3, CASE_D = 0.92;
 
 /* ---------- the exterior: the case, closed, standing in her footage ---------- */
@@ -466,7 +466,7 @@ function cardTexture(title, sub, accent) {
   // the string it hangs by
   const str = new THREE.Mesh(new THREE.PlaneGeometry(0.012, 0.3),
     new THREE.MeshStandardMaterial({ color: 0xC9C2AE, roughness: 0.9 }));
-  onWall(str, pl.wall, pl.u, pl.v + 0.5, pl.tilt || 0);
+  onWall(str, pl.wall, pl.u, pl.v + 0.51, pl.tilt || 0);
   items.push({ mesh: m, kind: 'panel', data: pl, home: m.position.clone(), rot: m.rotation.z, quat: m.quaternion.clone() });
 });
 
@@ -577,10 +577,20 @@ host.addEventListener('click', () => {
 let opened = false, openT = 0, openTarget = 0, spin = 0, spinTarget = 0;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* Scroll position is the ONLY source of truth for how open the case is.
+   Clicking a tag used to set openTarget = 1 directly, and the very next scroll
+   event overwrote it with the value derived from a scroll position of ~0 — so
+   the case sat half-open with its shell parked in the middle of the room,
+   blocking everything inside. A click now SCROLLS to the open point instead of
+   fighting it. */
 export function openCase() {
   opened = true;
-  openTarget = 1;
   document.body.classList.add('is-open');
+  if (track) {
+    const total = track.offsetHeight - innerHeight;
+    const want = total * 0.2;
+    if (scrollY < want) scrollTo({ top: want, behavior: reduce ? 'auto' : 'smooth' });
+  } else openTarget = 1;
   /* Tell the DOM layer too. Scrolling used to open the scene while the
      language tags stayed on screen, because the two halves each had their own
      idea of "open" and only the click path told both. */
@@ -608,8 +618,9 @@ function readScroll() {
   /* Reversible. The case opens across the first sixth of the track and closes
      again on the way back up — a threshold you can only cross once is a door
      that deletes itself, and the object is the whole point of the page. */
-  if (!opened) { if (p > 0.015) openCase(); }
-  else openTarget = Math.max(0.001, Math.min(1, p / 0.16));
+  openTarget = Math.min(1, p / 0.16);
+  if (!opened && p > 0.015) { opened = true; document.body.classList.add('is-open');
+    if (typeof window.__coldopenUIOpen === 'function') window.__coldopenUIOpen(); }
 }
 addEventListener('scroll', readScroll, { passive: true });
 addEventListener('resize', readScroll);
@@ -643,9 +654,9 @@ function tick() {
   halfL.rotation.y = e * 2.5;
   halfR.rotation.y = -e * 2.5;
   handle.visible = e < 0.4;
-  exterior.visible = e < 0.985;
-  exterior.scale.setScalar(1 + e * 5.2);      // it opens past you as you enter
-  exterior.position.z = e * 9.0;
+  exterior.visible = e < 0.9;                 // gone before it can block the room
+  exterior.scale.setScalar(1 + e * 6.5);      // it opens past you as you enter
+  exterior.position.z = e * 12.0;
 
   /* Camera: from outside the case, through the gap, to standing in the room. */
   camera.position.z = 13.2 - e * (13.2 - 2.05);
@@ -655,7 +666,7 @@ function tick() {
   spin += (spinTarget - spin) * 0.08;
   camera.rotation.order = 'YXZ';
   camera.rotation.y = spin * openT;
-  camera.rotation.x = -0.04 * openT;
+  camera.rotation.x = -0.10 * openT;
 
   /* The room only exists once you are through the threshold, so its lining
      never shows through the closed shell. */
@@ -728,6 +739,6 @@ function tick() {
   }
 }
 
-if (reduce) { openT = 1; opened = true; document.body.classList.add('is-open'); }
+if (reduce) { openT = 1; openTarget = 1; opened = true; document.body.classList.add('is-open'); }
 tick();
 root && root.setAttribute('data-ready', '1');

@@ -54,9 +54,11 @@ export function emitWebGLCSS(w: World, shell: CaseShell): string {
   --hud:.62rem; --gut:clamp(1.1rem,4vw,3rem);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{background:var(--ground);scroll-behavior:smooth}
+/* overscroll-behavior-x: none stops a sideways trackpad flick from triggering
+   Chrome's swipe-to-go-back, which on a Mac takes the whole page with it. */
+html{background:var(--ground);scroll-behavior:smooth;overscroll-behavior-x:none}
 body{background:var(--ground);color:var(--ink);font-family:var(--f-text);overflow-x:hidden;
-  -webkit-font-smoothing:antialiased;min-height:100svh}
+  overscroll-behavior-x:none;-webkit-font-smoothing:antialiased;min-height:100svh}
 img,video{display:block;max-width:100%}
 a{color:inherit} button{font:inherit}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
@@ -425,12 +427,16 @@ export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseSh
     panels: x.panels,
     polaroids: x.polaroids ?? [],
     artist: w.artist,
+    /* All four on the BACK wall, in a row you are looking straight at the
+       moment you step in. They were on the side and front walls, which meant
+       the only way to discover the entire About / Sources / Contact of the
+       site was to happen to turn around. */
     plaques: [
-      { id: 'figures',  label: lex.proof,   sub: 'baggage · weighed',  wall: 'left',  u: -0.4, v: 0.95, tilt: -3 },
-      { id: 'manifest', label: lex.index,   sub: 'declared contents',  wall: 'right', u: 1.0,  v: 0.95, tilt: 3 },
-      { id: 'contact',  label: lex.contact, sub: 'declaration',        wall: 'front', u: -2.4, v: -0.2, tilt: -2 },
+      { id: 'figures',  label: lex.proof,   sub: 'baggage · weighed', wall: 'back', u: -3.6, v: -1.95, tilt: -3 },
+      { id: 'manifest', label: lex.index,   sub: 'declared contents', wall: 'back', u: -1.2, v: -2.0,  tilt: 2 },
+      { id: 'contact',  label: lex.contact, sub: 'declaration',       wall: 'back', u: 1.2,  v: -1.95, tilt: -2 },
       ...((x.feed?.length ?? 0) > 0
-        ? [{ id: 'feed', label: 'The Feed', sub: '@' + (x.igHandle ?? ''), wall: 'front', u: 2.4, v: -0.2, tilt: 3 }]
+        ? [{ id: 'feed', label: 'The Feed', sub: '@' + (x.igHandle ?? ''), wall: 'back', u: 3.6, v: -2.0, tilt: 3 }]
         : []),
     ],
     pouchLabel: x.docs?.kicker ?? 'DOCUMENTS',
@@ -497,14 +503,14 @@ ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-
   ${regs.length > 1 ? `<!-- The language choice IS the way in: three tags, at eye
        level, and picking one both sets the register and opens the case. -->
   <div class="gate" id="gate">
-    <p class="tagline" data-t="prompt"><b>CHOOSE YOUR TAG</b> — IT OPENS THE CASE</p>
+    <p class="tagline" data-t="prompt"><b>CHOOSE YOUR TAG</b> — IT OPENS THE CASE · THEN SCROLL DOWN</p>
     <div class="tags" id="tags">
 ${regs.map(r => `      <button class="tag" data-reg="${esc(r.code)}" aria-label="${esc(LANG_NAME[r.code] ?? r.label)}">
         <span class="tag-body"><span class="tag-code">${esc(r.label)}</span><span class="tag-name">${esc(LANG_NAME[r.code] ?? r.label)}</span></span>
       </button>`).join('\n')}
     </div>
   </div>` : ''}
-  <p class="scrollhint mono">${esc(w.threshold.reward)} — EVERYTHING IS IN THE CASE</p>
+  <p class="scrollhint mono">↓ SCROLL DOWN TO LOOK AROUND · ↑ SCROLL UP TO CLOSE IT</p>
 </div>
 </div>
 
