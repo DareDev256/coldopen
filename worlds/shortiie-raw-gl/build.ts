@@ -234,10 +234,20 @@ const docs: Docs = {
   ],
 };
 
+/* Her Instagram, ranked by comment count, read from Instagram's own embed
+   endpoint on 2026-08-21. Only posts owned by @shortiieraw — the search also
+   surfaced fan and repost accounts, and someone else's repost is not her feed. */
+const feed = [
+  { id: 'CZr3NgclTAj', caption: "I'm going to miss it here", comments: 149 },
+  { id: 'DbBZ-fgR_nR', caption: 'Hair and make up appreciation post', comments: 132 },
+  { id: 'CFZ7NNApL3N', caption: 'Fire — in-studio performance', comments: 109 },
+  { id: 'CqiijQ8ug_N', caption: '#photodump', comments: 75 },
+];
+
 const out = build(world as any, content, ledger, {
   shell,
   webgl: {
-    panels, polaroids, docs,
+    panels, polaroids, docs, feed, igHandle: 'shortiieraw',
     montage: { src: 'assets/montage.mp4', poster: 'assets/montage-poster.jpg' },
   },
 });

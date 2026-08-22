@@ -139,6 +139,14 @@ body.is-open .hero-copy{ opacity:0; transform:translateY(-28px) }
      to the accessibility tree and can still paint stray boxes over the canvas */
   opacity:0; visibility:hidden; pointer-events:none; transition:opacity .35s ease, visibility .35s }
 #docs.open, .panel.open{ opacity:1; visibility:visible; pointer-events:auto }
+.doc--wide{ width:min(100%,1080px) }
+.feed{ display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); margin-top:1.4rem }
+.feed-i{ margin:0; background:#FBF9F3; border:1px solid rgba(20,19,26,.2) }
+.feed-i iframe{ width:100%; height:520px; border:0; display:block; background:#fff }
+.feed-i figcaption{ font-family:var(--f-mono); font-size:.52rem; letter-spacing:.14em; text-transform:uppercase;
+  color:#6A6252; padding:.6rem .7rem; border-top:1px solid rgba(20,19,26,.16) }
+.feed-i figcaption b{ color:#14131A; font-size:.72rem }
+.feed-i figcaption a{ color:#B4181F; text-decoration:none }
 .doc{ position:relative; width:min(100%,760px); max-height:86svh; overflow:auto;
   background:linear-gradient(168deg,#F6F3EA,#E6E1D4); color:#14131A; border-radius:3px;
   box-shadow:0 30px 80px ${alpha('#000000', 0.6)}; padding:clamp(1.4rem,4vw,2.6rem) }
@@ -377,6 +385,14 @@ export interface Docs {
   readonly quotes: readonly { text: string; source: string; sourceUrl: string }[];
 }
 
+export interface FeedPost {
+  /** the shortcode, e.g. CZr3NgclTAj */
+  readonly id: string;
+  readonly caption: string;
+  /** read from Instagram's own embed surface, used to rank the feed */
+  readonly comments: number;
+}
+
 export interface WebGLExtras {
   readonly panels: readonly Panel[];
   /** the montage behind the closed case, and its poster */
@@ -385,6 +401,17 @@ export interface WebGLExtras {
   readonly polaroids?: readonly Polaroid[];
   /** what is in the pouch — the about, as papers rather than a bio block */
   readonly docs?: Docs;
+  /**
+   * Her Instagram, through Instagram's OWN embed endpoint.
+   *
+   * Not scraped. The images are served by Instagram, the post stays attributed
+   * to her, likes and comments stay live, and a deleted post disappears from
+   * the site the same day it disappears from her feed — which is the correct
+   * behaviour and the reason not to rip the pictures into textures even if it
+   * were allowed.
+   */
+  readonly feed?: readonly FeedPost[];
+  readonly igHandle?: string;
 }
 
 export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: WebGLExtras): string {
@@ -401,7 +428,10 @@ export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseSh
     plaques: [
       { id: 'figures',  label: lex.proof,   sub: 'baggage · weighed',  wall: 'left',  u: -0.4, v: 0.95, tilt: -3 },
       { id: 'manifest', label: lex.index,   sub: 'declared contents',  wall: 'right', u: 1.0,  v: 0.95, tilt: 3 },
-      { id: 'contact',  label: lex.contact, sub: 'declaration',        wall: 'front', u: -1.9, v: -0.2, tilt: -2 },
+      { id: 'contact',  label: lex.contact, sub: 'declaration',        wall: 'front', u: -2.4, v: -0.2, tilt: -2 },
+      ...((x.feed?.length ?? 0) > 0
+        ? [{ id: 'feed', label: 'The Feed', sub: '@' + (x.igHandle ?? ''), wall: 'front', u: 2.4, v: -0.2, tilt: 3 }]
+        : []),
     ],
     pouchLabel: x.docs?.kicker ?? 'DOCUMENTS',
   };
@@ -504,6 +534,23 @@ ${(x.docs?.body ?? []).map(p => `    <p>${esc(p)}</p>`).join('\n')}
 ${(x.docs?.quotes ?? []).map(q => `    <blockquote class="doc-q">${esc(q.text)}<cite><a href="${esc(q.sourceUrl)}" target="_blank" rel="noopener">${esc(q.source)} ↗</a></cite></blockquote>`).join('\n')}
   </div>
 </div>
+
+${(x.feed?.length ?? 0) > 0 ? `<!-- the feed: her Instagram, through Instagram's own embed -->
+<div id="panel-feed" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="The feed">
+  <div class="doc doc--wide">
+    <button class="doc-x mono" data-close aria-label="Close">CLOSE ✕</button>
+    <div class="doc-h"><span>CARRIED ON · @${esc(x.igHandle ?? '')}</span><span>${esc(w.chrome.docCode)}</span></div>
+    <h3>The Feed</h3>
+    <p>Her most-talked-about posts, newest engagement first. These are live Instagram embeds — the pictures are served by Instagram and stay attributed to her, so a post she takes down disappears from here the same day.</p>
+    <div class="feed">
+${(x.feed ?? []).map(f => `      <figure class="feed-i">
+        <iframe src="https://www.instagram.com/p/${esc(f.id)}/embed/captioned/" loading="lazy" scrolling="no" allowtransparency="true" title="${esc(f.caption || f.id)}"></iframe>
+        <figcaption><b>${esc(f.comments)}</b> comments · <a href="https://www.instagram.com/p/${esc(f.id)}/" target="_blank" rel="noopener">open on Instagram ↗</a></figcaption>
+      </figure>`).join('\n')}
+    </div>
+    <p class="alt">More at <a href="https://www.instagram.com/${esc(x.igHandle ?? '')}/" target="_blank" rel="noopener">@${esc(x.igHandle ?? '')}</a></p>
+  </div>
+</div>` : ''}
 
 <!-- the baggage tag: what it weighs -->
 <div id="panel-figures" class="panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="${esc(lex.proof)}">

@@ -28,7 +28,9 @@ export function emitVercelJson(w: World): string {
     "img-src 'self' data: https:",
     "media-src 'self' https:",
     "connect-src 'self' https:",
-    "frame-src https://www.youtube-nocookie.com https://open.spotify.com",
+    // instagram.com is here for the artist's OWN post embeds — the sanctioned
+    // display surface, which keeps attribution and takedowns with her
+    "frame-src https://www.youtube-nocookie.com https://open.spotify.com https://www.instagram.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self' https:",
