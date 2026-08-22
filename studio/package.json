@@ -2,7 +2,20 @@
   "name": "coldopen-studio",
   "version": "0.1.0",
   "private": true,
-  "scripts": { "dev": "next dev -p 4300", "build": "next build", "start": "next start -p 4300" },
-  "dependencies": { "next": "15.5.4", "react": "19.1.1", "react-dom": "19.1.1" },
-  "devDependencies": { "@types/node": "^22", "@types/react": "^19", "typescript": "^5" }
+  "scripts": {
+    "dev": "next dev -p 4300",
+    "build": "next build",
+    "start": "next start -p 4300"
+  },
+  "dependencies": {
+    "next": "15.5.4",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
 }
