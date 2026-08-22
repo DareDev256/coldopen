@@ -75,13 +75,19 @@ button{font:inherit}
    object is a studio backdrop and this is meant to be where she is.
    ========================================================= */
 #ground{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+/* Her footage reads as HER footage. The wash was the ground colour laid over
+   the top at 85%, which turns Angola blue and makes every plate look like the
+   same shot. The scrim is neutral now: it darkens for legibility and does not
+   recolour anything. */
 #ground video,#ground img{ width:100%; height:100%; object-fit:cover;
-  filter:saturate(.6) contrast(1.02) brightness(.46); }
+  filter:contrast(1.04) brightness(.84); }
 #ground::after{ content:""; position:absolute; inset:0;
-  background:radial-gradient(115% 85% at 50% 42%, ${alpha(ground, 0.5)} 0%, ${alpha(ground, 0.85)} 60%, ${alpha(ground, 0.96)} 100%),
-             linear-gradient(180deg, ${alpha(ground, 0.68)}, transparent 24%, transparent 66%, ${alpha(ground, 0.95)}); }
+  background:radial-gradient(120% 88% at 50% 42%, rgba(0,0,0,.16) 0%, rgba(0,0,0,.52) 62%, rgba(0,0,0,.76) 100%),
+             linear-gradient(180deg, rgba(0,0,0,.48), transparent 22%, transparent 68%, rgba(0,0,0,.7)); }
 /* once the case is open the footage steps back so the contents are the picture */
-body.is-open #ground video{ filter:saturate(.42) contrast(1) brightness(.26) blur(3px); transition:filter 1.2s ease; }
+body.is-open #ground video{ filter:contrast(1) brightness(.42) blur(2px); transition:filter 1.2s ease; }
+body.is-open #ground::after{ background:
+  radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,.52) 0%, rgba(0,0,0,.76) 68%, rgba(0,0,0,.86) 100%); }
 
 /* =========================================================
    1 · THE STAND — where the case waits
@@ -111,7 +117,12 @@ body.is-open #ground video{ filter:saturate(.42) contrast(1) brightness(.26) blu
 .case{ position:relative; height:min(46svh,430px); width:auto; aspect-ratio:.72; transform-style:preserve-3d;
   transform:rotateY(-15deg) rotateX(3deg); transition:transform 1.2s cubic-bezier(.16,1,.3,1); z-index:2;
   margin-top:clamp(2.4rem,6vh,4.2rem); }
-.case.open{ transform:rotateY(0deg) rotateX(1deg) scale(1.12); }
+/* The case grows to 1.4 when open and its raised handle reaches above its own
+   box, so the wordmark needs clearance measured from the SCALED height, not
+   the resting one. transform-origin keeps it growing downward, away from the
+   type, rather than outward from its middle. */
+.case.open{ transform:rotateY(0deg) rotateX(1deg) scale(1.4); transform-origin:50% 62%;
+  margin-top:clamp(3.5rem,10vw,7rem); }
 
 /* the telescoping handle, behind the shell */
 .tele{ position:absolute; left:26%; right:26%; top:-11%; height:12%; z-index:0; transform:translateZ(-26px); }
@@ -126,8 +137,11 @@ body.is-open #ground video{ filter:saturate(.42) contrast(1) brightness(.26) blu
   transition:transform 1.35s cubic-bezier(.5,.02,.28,1); }
 .half.l{ left:0; transform-origin:left center; }
 .half.r{ right:0; transform-origin:right center; }
-.case.open .half.l{ transform:rotateY(-124deg); }
-.case.open .half.r{ transform:rotateY(124deg); }
+/* Past 90 so the inner faces turn toward the viewer, but nowhere near flat —
+   the lids now carry the paperwork and the back catalogue, and content you
+   cannot read is content you did not ship. */
+.case.open .half.l{ transform:rotateY(-153deg); }
+.case.open .half.r{ transform:rotateY(153deg); }
 
 .face{ position:absolute; inset:0; backface-visibility:hidden; overflow:hidden; }
 /* the ribbed shell — the one detail that says "luggage" and not "box" */
@@ -151,15 +165,26 @@ body.is-open #ground video{ filter:saturate(.42) contrast(1) brightness(.26) blu
     repeating-linear-gradient(52deg, ${alpha(accent, 0.09)} 0 1px, transparent 1px 8px),
     repeating-linear-gradient(-52deg, ${alpha(accent, 0.06)} 0 1px, transparent 1px 8px),
     linear-gradient(160deg, #1A1720, #08070B 82%);
-  box-shadow:inset 0 0 0 2px ${alpha(payoff, 0.34)}, inset 0 0 44px ${alpha('#000000', 0.9)}; }
+  box-shadow:inset 0 0 0 2px ${alpha(payoff, 0.34)}, inset 0 0 26px ${alpha('#000000', 0.66)}; }
 /* the zip divider that runs round the lid */
 .face.in::before{ content:""; position:absolute; inset:7%; border-radius:3px; pointer-events:none;
   border:1px dashed ${alpha('#ffffff', 0.2)};
   background:repeating-linear-gradient(90deg, transparent 0 6px, ${alpha('#ffffff', 0.05)} 6px 7px); }
-/* the maker's strip, the way a real lining carries one */
-.face.in::after{ content:"${(w.artist + ' · ' + w.name).toUpperCase()}"; position:absolute; left:0; right:0; bottom:11%;
-  text-align:center; font-family:var(--f-mono); font-size:clamp(.36rem,.85vw,.46rem); letter-spacing:.34em;
-  color:${alpha(payoff, 0.62)}; pointer-events:none; }
+/* the maker's strip sits UNDER the lid content now, not across it */
+.face.in::after{ content:"${(w.artist + ' · ' + w.name).toUpperCase()}"; position:absolute; left:0; right:0; bottom:2%;
+  text-align:center; font-family:var(--f-mono); font-size:clamp(.28rem,.68vw,.38rem); letter-spacing:.3em;
+  color:${alpha(payoff, 0.42)}; pointer-events:none; z-index:1; }
+
+/* THE LIDS CARRY CONTENT.
+   Left lid: the paperwork. Right lid: the back catalogue. Middle: what is
+   current. Two empty lined panels either side of a crowded middle was the
+   whole case doing one third of the work. */
+.lid-in-wrap{ position:absolute; inset:6% 6% 9%; z-index:3; display:flex; flex-direction:column;
+  gap:clamp(.26rem,.8vw,.44rem); overflow:hidden; }
+.lid-lab{ font-family:var(--f-mono); font-size:clamp(.32rem,.8vw,.42rem); letter-spacing:.26em;
+  text-transform:uppercase; color:${alpha(accent, 0.85)}; flex:0 0 auto; margin-bottom:.05rem; }
+.lid-in-wrap .dtag{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; justify-content:center; }
+.lid-in-wrap .slot{ flex:1 1 0; min-height:0; aspect-ratio:auto; }
 .half.l .face.in{ border-radius:14px 3px 3px 14px } .half.r .face.in{ border-radius:3px 14px 14px 3px }
 
 /* corner caps */
@@ -284,7 +309,12 @@ body.is-open #ground video{ filter:saturate(.42) contrast(1) brightness(.26) blu
   color:${alpha('#ffffff', 0.78)}; line-height:1.7 }
 
 /* right: the packed items under elastic straps */
-.packed{ position:relative; flex:1; display:flex; flex-direction:column; gap:4%; min-height:0 }
+/* The middle carries the current catalogue — seven items, not four — so it is
+   a grid rather than a column. A column of seven in a case-height compartment
+   gives each one a 20px sliver. */
+.packed{ position:relative; flex:1; display:grid; grid-template-columns:1fr 1fr;
+  gap:clamp(.2rem,.7vw,.36rem); min-height:0; align-content:stretch }
+.packed .item{ min-height:0 }
 .strap{ position:absolute; z-index:4; pointer-events:none; background:${alpha('#1A1A20', 0.9)};
   box-shadow:0 1px 3px ${alpha('#000000', 0.7)}, inset 0 1px 0 ${alpha('#ffffff', 0.14)} }
 .strap.h{ left:-3%; right:-3%; height:8px; top:47%; z-index:6 }
@@ -296,11 +326,13 @@ body.is-open #ground video{ filter:saturate(.42) contrast(1) brightness(.26) blu
 .item:hover,.item:focus-visible{ transform:scale(1.035); outline:none; z-index:5 }
 .item img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.94 }
 .item::after{ content:""; position:absolute; inset:0; background:linear-gradient(transparent 38%, ${alpha('#000000', 0.92)}) }
-.item-t{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.4rem .45rem }
-.item-t b{ display:block; font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
-  font-size:clamp(.56rem,1.25vw,.74rem); line-height:1.04; color:#fff }
-.item-t i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:clamp(.36rem,.9vw,.46rem);
-  letter-spacing:.11em; color:${alpha('#ffffff', 0.7)}; margin-top:.14rem; text-transform:uppercase }
+.item-t{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.32rem .38rem }
+.item-t b{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
+  font-size:clamp(.48rem,1vw,.62rem); line-height:1.02; color:#fff;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+.item-t i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:clamp(.3rem,.72vw,.38rem);
+  letter-spacing:.08em; color:${alpha('#ffffff', 0.78)}; margin-top:.1rem; text-transform:uppercase;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 
 .hint{ font-family:var(--f-mono); font-size:.58rem; letter-spacing:.26em; text-transform:uppercase;
   color:var(--accent); text-align:center; opacity:0; transition:opacity .5s ease .9s }
@@ -339,10 +371,12 @@ p + p{ margin-top:1rem }
 .slot:hover img{ transform:scale(1.05) }
 .slot::after{ content:""; position:absolute; inset:0; background:linear-gradient(transparent 36%, ${alpha('#000000', 0.9)}) }
 .slot-t{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.55rem .55rem .5rem }
-.slot-t b{ display:block; font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
-  font-size:clamp(.68rem,1.5vw,.84rem); line-height:1.04; color:#fff }
-.slot-t i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:.5rem; letter-spacing:.13em;
-  color:${alpha('#ffffff', 0.68)}; margin-top:.22rem; text-transform:uppercase }
+.slot-t b{ font-family:var(--f-disp); font-weight:900; text-transform:uppercase;
+  font-size:clamp(.5rem,1.1vw,.68rem); line-height:1.02; color:#fff;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+.slot-t i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:.38rem; letter-spacing:.09em;
+  color:${alpha('#ffffff', 0.78)}; margin-top:.14rem; text-transform:uppercase;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 .slot-n{ position:absolute; top:.42rem; left:.48rem; z-index:2; font-family:var(--f-mono); font-size:.48rem;
   letter-spacing:.14em; color:${alpha(accent, 0.92)} }
 

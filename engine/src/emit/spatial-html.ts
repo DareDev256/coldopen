@@ -41,7 +41,13 @@ export function emitSpatialHTML(w: World, c: SiteContent, l: Ledger, shell: Case
   const g = [...new Set(families)].join('&family=');
   const lex = w.lexicon;
   const regs = w.registers ?? [];
-  const packed = shell.packed ?? 4;
+  /* The right lid takes the last tray — the back catalogue. Whatever is left
+     is current, and the middle holds all of it. The middle used to show a
+     fixed four while the lids sat empty, so the case did a third of its job. */
+  const backFrom = shell.trays.length > 1
+    ? (shell.trays[shell.trays.length - 1]?.from ?? c.units.length)
+    : c.units.length;
+  const packed = shell.packed ?? backFrom;
 
   return `<!doctype html>
 <html lang="en">
@@ -114,20 +120,13 @@ ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-
           <span class="zip" aria-hidden="true"></span>
           <span class="pocket-t mono">${esc(x.docs?.kicker ?? 'PASSPORT · DOCUMENTS')}<br />${esc(w.chrome.docCode)}</span>
         </button>
-        <!-- the paperwork, in the lid. Everything that used to be a section
-             under the page is now something you take out of the case. -->
-        <div class="docs">
-          <button class="dtag" type="button" data-panel="figures"><b data-t="lex.proof">${esc(lex.proof)}</b><i>baggage · weighed</i></button>
-          <button class="dtag" type="button" data-panel="manifest"><b data-t="lex.index">${esc(lex.index)}</b><i>declared contents</i></button>
-          <button class="dtag" type="button" data-panel="contact"><b data-t="lex.contact">${esc(lex.contact)}</b><i>declaration</i></button>
-${(x.feed?.length ?? 0) > 0 ? `          <button class="dtag" type="button" data-panel="feed"><b>The Feed</b><i>@${esc(x.igHandle ?? '')}</i></button>` : ''}
-        </div>
+
       </div>
       <div class="compartment">
         <div class="packed">
           <span class="strap h" aria-hidden="true"></span>
           <span class="strap buckle" aria-hidden="true"></span>
-${c.units.slice(0, packed).map(u => `          <a class="item" href="${esc(u.href)}" target="_blank" rel="noopener">
+${c.units.slice(0, backFrom).map(u => `          <a class="item" href="${esc(u.href)}" target="_blank" rel="noopener">
             <img src="${esc(u.image)}" alt="${esc(u.title)}" />
             <span class="item-t"><b>${esc(u.title)}</b>${u.sub ? `<i>${esc(u.sub)}</i>` : ''}</span>
           </a>`).join('\n')}
@@ -141,14 +140,35 @@ ${c.units.slice(0, packed).map(u => `          <a class="item" href="${esc(u.hre
         <span class="cap tl" aria-hidden="true"></span><span class="cap bl" aria-hidden="true"></span>
 ${shell.stamps.slice(0, 2).map((s, i) => `        <span class="stamp" style="top:${30 + i * 24}%; left:${10 + i * 8}%; transform:rotate(${s.rotate}deg)"><b>${esc(s.text)}</b><i>${esc(s.sub)}</i></span>`).join('\n')}
       </div>
-      <div class="face in" aria-hidden="true"></div>
+      <!-- LEFT LID · the paperwork. Everything readable about her, in the
+           panel a real case keeps its documents in. -->
+      <div class="face in">
+        <div class="lid-in-wrap">
+          <p class="lid-lab">DOCUMENTS</p>
+          <button class="dtag" type="button" data-panel="docs"><b>${esc(x.docs?.title ? 'Passport' : 'Passport')}</b><i>${esc(x.docs?.kicker ?? 'passport · documents')}</i></button>
+          <button class="dtag" type="button" data-panel="figures"><b data-t="lex.proof">${esc(lex.proof)}</b><i>baggage · weighed</i></button>
+          <button class="dtag" type="button" data-panel="manifest"><b data-t="lex.index">${esc(lex.index)}</b><i>declared contents</i></button>
+          <button class="dtag" type="button" data-panel="contact"><b data-t="lex.contact">${esc(lex.contact)}</b><i>declaration</i></button>
+${(x.feed?.length ?? 0) > 0 ? `          <button class="dtag" type="button" data-panel="feed"><b>The Feed</b><i>@${esc(x.igHandle ?? '')}</i></button>` : ''}
+        </div>
+      </div>
     </div>
     <div class="half r">
       <div class="face out">
         <span class="cap tr" aria-hidden="true"></span><span class="cap br" aria-hidden="true"></span>
 ${shell.stamps.slice(2).map((s, i) => `        <span class="stamp" style="top:${44 + i * 22}%; right:${9 + i * 7}%; transform:rotate(${s.rotate}deg)"><b>${esc(s.text)}</b><i>${esc(s.sub)}</i></span>`).join('\n')}
       </div>
-      <div class="face in" aria-hidden="true"></div>
+      <!-- RIGHT LID · the back catalogue. The older records, still hers,
+           kept where you keep what you are not reaching for today. -->
+      <div class="face in">
+        <div class="lid-in-wrap">
+          <p class="lid-lab">${esc(shell.trays[shell.trays.length - 1]?.label ?? 'KEPT')}</p>
+${c.units.slice(backFrom).map((u) => `          <a class="slot" href="${esc(u.href)}" target="_blank" rel="noopener">
+            <img src="${esc(u.image)}" alt="${esc(u.title)}" loading="lazy" decoding="async" />
+            <span class="slot-t"><b>${esc(u.title)}</b>${u.sub ? `<i>${esc(u.sub)}</i>` : ''}</span>
+          </a>`).join('\n')}
+        </div>
+      </div>
     </div>
 
     <span class="seam" aria-hidden="true"></span>
