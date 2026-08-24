@@ -13,6 +13,7 @@
  */
 
 import type { World } from '../world.ts';
+import { railJS } from './rail.ts';
 import { hsl } from '../world.ts';
 import { Ledger, renderValue } from '../ledger.ts';
 import type { SiteContent } from './html.ts';
@@ -784,18 +785,7 @@ export function emitWebGLUIJS(w: World): string {
     }, { passive: true });
   }
 
-  var form = document.getElementById('railForm'), msg = document.getElementById('formMsg');
-  if (form) form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (form.querySelector('[name="_gotcha"]').value) return;
-    var b = form.querySelector('button[type="submit"]'), o = b.textContent;
-    b.disabled = true; b.textContent = 'SENDING…'; msg.className = 'form-msg mono'; msg.textContent = '';
-    fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status);
-        form.reset(); msg.className = 'form-msg mono ok'; msg.textContent = 'RECEIVED. YOU WILL HEAR BACK.'; })
-      .catch(function (err) { msg.className = 'form-msg mono err'; msg.textContent = 'DID NOT SEND (' + err.message + '). EMAIL INSTEAD.'; })
-      .finally(function () { b.disabled = false; b.textContent = o; });
-  });
+  ${railJS()}
 })();
 `;
 }
