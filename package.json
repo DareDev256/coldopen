@@ -1,6 +1,6 @@
 {
   "name": "coldopen",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "COLD OPEN — a named-premise engine for artist websites. Extracts a world, derives the design from the name, and refuses to print a number it cannot source.",
   "license": "MIT",

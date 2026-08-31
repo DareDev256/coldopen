@@ -5,15 +5,37 @@ studio/public/preview/
 *.log
 .DS_Store
 
-# Artist artwork is fetched at build time, not redistributed here.
-# These are YouTube thumbnails and label cover art belonging to the artists
-# and their labels; build.ts pulls them fresh.
-worlds/*/assets/*.jpg
-worlds/*/assets/*.png
-worlds/*/site/
-# Source footage is 444MB of the artist's own music videos, pulled by
-# make-clips.sh. Not redistributed here.
-worlds/*/footage/
-worlds/*/assets/clips/
-worlds/*/assets/montage.mp4
-worlds/*/assets/montage-poster.jpg
+# --- Artist media. Fetched at build time, never redistributed here. ---
+# The old rule was `worlds/*/assets/*.jpg`. A single `*` matches one path
+# segment and does not cross a slash, so it only ever covered files sitting
+# directly in an assets directory. Eight polaroids in
+# worlds/<artist>/assets/polaroids/ walked straight past it, and audio had no
+# rule at all, so a 2.2MB master mp3 was committed and published. The patterns
+# below use `**` so they match at any depth, and they cover audio and video as
+# well as images.
+
+# Nothing under any world's assets directory is ever tracked, at any depth.
+worlds/**/assets/**
+
+# Defence in depth: artist media anywhere under worlds/, whatever the folder
+# is called, so a new world that invents its own layout is still covered.
+worlds/**/*.jpg
+worlds/**/*.jpeg
+worlds/**/*.png
+worlds/**/*.webp
+worlds/**/*.gif
+worlds/**/*.mp3
+worlds/**/*.wav
+worlds/**/*.m4a
+worlds/**/*.aac
+worlds/**/*.flac
+worlds/**/*.ogg
+worlds/**/*.mp4
+worlds/**/*.m4v
+worlds/**/*.mov
+worlds/**/*.webm
+worlds/**/*.avi
+
+# Generated output and source footage.
+worlds/**/site/
+worlds/**/footage/
