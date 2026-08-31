@@ -59,9 +59,9 @@ The first two are mandatory. At least four of the remaining five must be
 present, or the build is **refused**.
 
 That threshold is not a guess. Reading the source of the five reference sites,
-only two carry HUD chrome and only two state a threshold; the two that both
-blind judges ranked highest average five to six moves, and the one both judges
-picked as machine-generated carries three. The engine is deliberately no
+only two carry HUD chrome and only two state a threshold; the two the blind
+judge ranked highest average five to six moves, and the one the judge picked as
+machine-generated carries three. The engine is deliberately no
 stricter than the work it was derived from.
 
 **[docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** has the full extraction —
@@ -118,7 +118,7 @@ nudging one channel, so the guard tests hue, saturation and lightness:
 
 One reference site's config declared six reds — `primary`, `primary-dim`,
 `accent`, `blood`, `crimson`, `ember`. Another declared `--cyan: #3fd8ff`. One
-token, one name, one colour. Both blind judges picked the six-red site as the
+token, one name, one colour. The blind judge picked the six-red site as the
 machine-generated one.
 
 `assertHueDiscipline()` refuses any colour within 25° of the accent at

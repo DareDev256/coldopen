@@ -311,7 +311,7 @@ export function assertAccentSaturated(hex: string): void {
  * accent #FF4444, blood #DC143C, crimson #B22222 and ember #FF6B35. Six reds.
  * 100bandplan declares `--cyan: #3fd8ff`. One.
  *
- * Both blind judges picked savv4x as the machine-generated site. Six
+ * The blind judge picked savv4x as the machine-generated site. Six
  * near-identical reds is what a palette looks like when nobody decided — the
  * eye cannot separate #FF4444 from #FF1744, so the extra five buy nothing and
  * cost the only thing that would have read: commitment.
@@ -373,7 +373,7 @@ export function auditWorld(w: World, ledger?: Ledger): WorldAudit {
   if (!w.moves.includes('threshold_ritual')) problems.push('no threshold ritual — the visitor never crosses anything');
   const optional = w.moves.filter(m => m !== 'named_premise' && m !== 'threshold_ritual').length;
   if (optional < 4) {
-    problems.push(`only ${optional}/5 of the optional moves — the reference site that both blind judges picked as machine-made carried three. Four is the floor.`);
+    problems.push(`only ${optional}/5 of the optional moves — the reference site the blind judge picked as machine-made carried three. Four is the floor.`);
   }
 
   // the lexicon leak test: generic section names mean the world did not reach the copy
