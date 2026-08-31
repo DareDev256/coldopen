@@ -323,12 +323,34 @@ engine/src/
   emit/         index.html · css/style.css · js/main.js · vercel.json · SOURCES
 studio/         The UI. Next.js. Six steps, no terminal required.
 worlds/_template        Copy this to start. Refuses until you have filled it in.
-worlds/                 One directory per artist: their ledger and build script.
+worlds/100bandplan      The one shipped world kept here, because it is my own site.
+                        Client worlds are built in a private checkout, never here.
 docs/DESIGN-SYSTEM.md   The extraction, with the evidence for every rule.
 docs/GAUNTLET.md        The blind A/B method and both rounds of results.
 ```
 
 ---
+
+## What is not in this repository, and why
+
+This repo is the method: the engine, its guards, its tests, and a template. It
+is not a place to read a client's website.
+
+A world directory holds an artist's private working material. The ledger carries
+personal facts entered during the interview, including a date of birth. The
+build script carries their live booking endpoint with the email address behind
+it. The assets directory carries their masters and their video frames, which are
+their property and their label's, not mine to republish under this MIT licence.
+
+So the rule is: **show the artist the work, never publish the client's site
+code.** Client worlds are built in a private checkout and deployed from there.
+What ships here is `worlds/_template`, which is generic and refuses to build
+until you fill it in, and `worlds/100bandplan`, which is my own site and the
+worked example for the release path.
+
+`.gitignore` enforces the media half of that rule at any depth under `worlds/`,
+for audio and video as well as images. It previously used `worlds/*/assets/*.jpg`,
+which matches one path segment and therefore missed anything in a subdirectory.
 
 ## What it still cannot do
 
