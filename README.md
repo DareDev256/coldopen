@@ -268,7 +268,7 @@ Requires Node 20+.
 ```bash
 git clone https://github.com/DareDev256/coldopen
 cd coldopen
-node --test --experimental-strip-types engine/test/*.test.ts   # 36 tests, no deps
+node --test --experimental-strip-types engine/test/*.test.ts   # 42 tests, no deps
 ```
 
 ### Build a world
