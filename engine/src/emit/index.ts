@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { emitHTML, type SiteContent } from './html.ts';
 import { emitJS } from './js.ts';
-import { assertMeasure, emitGA4JS, measureCSP } from './measure.ts';
+import { assertMeasure, emitGA4JS, emitSearchConsoleFiles, measureCSP } from './measure.ts';
 import { auditWorld, type World, type WorldAudit } from '../world.ts';
 import type { Ledger } from '../ledger.ts';
 
@@ -92,6 +92,7 @@ export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boole
       'js/main.js': spatial ? emitSpatialJS(w) : emitJS(w),
       'vercel.json': emitVercelJson(w, c),
       ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
+      ...emitSearchConsoleFiles(c),
       'robots.txt': `User-agent: *\nAllow: /\nSitemap: ${c.canonical.replace(/\/$/, '')}/sitemap.xml\n`,
       'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${c.canonical}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>\n</urlset>\n`,
       'world.json': JSON.stringify({ world: w, ledger: l.toJSON(), content: c }, null, 2),
@@ -125,6 +126,7 @@ function buildWebGL(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: We
       'js/vendor/three.core.min.js': read('vendor/three.core.min.js'),
       'vercel.json': emitVercelJson(w, c),
       ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
+      ...emitSearchConsoleFiles(c),
       'robots.txt': `User-agent: *\nAllow: /\nSitemap: ${c.canonical.replace(/\/$/, '')}/sitemap.xml\n`,
       'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${c.canonical}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>\n</urlset>\n`,
       'world.json': JSON.stringify({ world: w, ledger: l.toJSON(), content: c, shell, panels: x.panels }, null, 2),

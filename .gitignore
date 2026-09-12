@@ -39,3 +39,9 @@ worlds/**/*.avi
 # Generated output and source footage.
 worlds/**/site/
 worlds/**/footage/
+
+# Client worlds live on this machine only. They were removed from the public repo on
+# 2026-08-31 but never ignored, so one `git add -A` would have put them back.
+worlds/shortiie-raw/
+worlds/shortiie-raw-carryon/
+worlds/shortiie-raw-gl/

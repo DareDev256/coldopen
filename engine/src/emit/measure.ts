@@ -16,8 +16,10 @@ import type { SiteContent } from './html.ts';
 export interface Measure {
   /** GA4 measurement id, G-XXXXXXXXXX. One property per site, never shared. */
   readonly ga4: string;
-  /** Search Console HTML-tag token (the content= value). Account-wide. */
-  readonly searchConsole?: string;
+  /** Search Console HTML-FILE token, e.g. 'google1234abcd.html'. The file token is
+      account-wide; the meta-tag token is NOT (it is minted per property, and a
+      borrowed one fails with "meta tag is incorrect" — measured 2026-09-12). */
+  readonly searchConsoleFile?: string;
 }
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -32,7 +34,6 @@ export function emitMeasureHead(c: SiteContent): string {
   const m = c.measure;
   if (!m) return '';
   return [
-    m.searchConsole ? `<meta name="google-site-verification" content="${esc(m.searchConsole)}" />` : '',
     `<script src="js/ga4.js" data-ga="${esc(m.ga4)}"></script>`,
     `<script async src="https://www.googletagmanager.com/gtag/js?id=${esc(m.ga4)}"></script>`,
   ].filter(Boolean).join('\n');
@@ -46,6 +47,14 @@ export function measureCSP(c: SiteContent): { script: string; connect: string; i
     connect: ' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com',
     img: ' https://www.google-analytics.com https://*.google-analytics.com',
   };
+}
+
+/** The Search Console ownership file, keyed by its own name. */
+export function emitSearchConsoleFiles(c: SiteContent): Record<string, string> {
+  const f = c.measure?.searchConsoleFile;
+  if (!f) return {};
+  if (!/^google[0-9a-f]{16}\.html$/.test(f)) throw new Error(`searchConsoleFile does not look like Google's token file: ${f}`);
+  return { [f]: `google-site-verification: ${f}` };
 }
 
 export function emitGA4JS(): string {

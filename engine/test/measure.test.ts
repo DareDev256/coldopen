@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emitMeasureHead, measureCSP, emitGA4JS, assertMeasure } from '../src/emit/measure.ts';
+import { emitMeasureHead, measureCSP, emitGA4JS, assertMeasure, emitSearchConsoleFiles } from '../src/emit/measure.ts';
 import { emitVercelJson } from '../src/emit/index.ts';
 import type { SiteContent } from '../src/emit/html.ts';
 
@@ -13,10 +13,10 @@ test('an unmeasured world emits no tag and no widened CSP', () => {
 });
 
 test('a measured world emits config-before-loader and the GA origins, nothing inline', () => {
-  const c = { ...base, measure: { ga4: 'G-ABCDEFGHIJ', searchConsole: 'tok' } };
+  const c = { ...base, measure: { ga4: 'G-ABCDEFGHIJ', searchConsoleFile: 'google0123456789abcdef.html' } };
   const head = emitMeasureHead(c);
   assert.ok(head.indexOf('js/ga4.js') < head.indexOf('gtag/js?id=G-ABCDEFGHIJ'));
-  assert.ok(head.includes('google-site-verification'));
+  assert.deepEqual(emitSearchConsoleFiles(c), { 'google0123456789abcdef.html': 'google-site-verification: google0123456789abcdef.html' });
   assert.ok(!/<script>[^<]/.test(head), 'no inline script');
   const csp = JSON.parse(emitVercelJson({ palette: {} } as any, c)).headers[0].headers[0].value;
   assert.match(csp, /script-src 'self' https:\/\/www\.googletagmanager\.com/);
