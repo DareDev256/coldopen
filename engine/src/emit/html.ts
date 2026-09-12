@@ -1,4 +1,5 @@
 import type { World } from '../world.ts';
+import { emitMeasureHead } from './measure.ts';
 import { Ledger, renderValue } from '../ledger.ts';
 
 export interface Unit {
@@ -29,6 +30,9 @@ export interface Rail {
 export interface SiteContent {
   readonly title: string;
   readonly description: string;
+  /** The short line the OBJECT shows (a mirror caption, a stamp). Defaults to description.
+      Split from it on 2026-09-12: a search description is a sentence for Google, a caption is three words for a person. */
+  readonly tagline?: string;
   readonly canonical: string;
   readonly ogImage: string;
   /** ledger ids to render as the live-number flex, in order */
@@ -39,6 +43,8 @@ export interface SiteContent {
   readonly rail: Rail;
   readonly links: readonly { label: string; href: string }[];
   readonly jsonLd?: Record<string, unknown>;
+  /** GA4 + Search Console. Absent = the world is not measured, and no tag is emitted. */
+  readonly measure?: import('./measure.ts').Measure;
 }
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -87,6 +93,7 @@ export function emitHTML(w: World, c: SiteContent, l: Ledger): string {
 <meta name="description" content="${esc(c.description)}" />
 <meta name="theme-color" content="${w.palette.ground}" />
 <link rel="canonical" href="${esc(c.canonical)}" />
+${emitMeasureHead(c)}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <meta property="og:type" content="music.musician" />
 <meta property="og:title" content="${esc(c.title)}" />

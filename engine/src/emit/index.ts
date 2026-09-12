@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { emitHTML, type SiteContent } from './html.ts';
 import { emitJS } from './js.ts';
+import { assertMeasure, emitGA4JS, measureCSP } from './measure.ts';
 import { auditWorld, type World, type WorldAudit } from '../world.ts';
 import type { Ledger } from '../ledger.ts';
 
@@ -19,15 +20,16 @@ export interface BuiltSite {
   readonly audit: WorldAudit;
 }
 
-export function emitVercelJson(w: World): string {
+export function emitVercelJson(w: World, c?: SiteContent): string {
+  const m = measureCSP(c ?? ({} as SiteContent));
   const csp = [
     "default-src 'self'",
-    "script-src 'self'",
+    `script-src 'self'${m.script}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https:",
+    `img-src 'self' data: https:${m.img}`,
     "media-src 'self' https:",
-    "connect-src 'self' https:",
+    `connect-src 'self' https:${m.connect}`,
     // instagram.com is here for the artist's OWN post embeds — the sanctioned
     // display surface, which keeps attribution and takedowns with her
     "frame-src https://www.youtube-nocookie.com https://open.spotify.com https://www.instagram.com",
@@ -72,6 +74,7 @@ export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boole
       throw new Error(`feed post ${f.id} is marked not embeddable but carries no poster — it would render as an empty tile`);
     }
   }
+  assertMeasure(c.measure);
   if (opts.webgl && opts.shell) return buildWebGL(w, c, l, opts.shell, opts.webgl, opts);
   // Topology decides the emitter, not a flag. A spatial world is an OBJECT
   // that opens; the others are documents. Same ledger, same rail, same
@@ -87,7 +90,8 @@ export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boole
       'index.html': html,
       'css/style.css': spatial ? emitSpatialCSS(w, opts.shell!) : emitCSS(w),
       'js/main.js': spatial ? emitSpatialJS(w) : emitJS(w),
-      'vercel.json': emitVercelJson(w),
+      'vercel.json': emitVercelJson(w, c),
+      ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
       'robots.txt': `User-agent: *\nAllow: /\nSitemap: ${c.canonical.replace(/\/$/, '')}/sitemap.xml\n`,
       'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${c.canonical}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>\n</urlset>\n`,
       'world.json': JSON.stringify({ world: w, ledger: l.toJSON(), content: c }, null, 2),
@@ -119,7 +123,8 @@ function buildWebGL(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: We
       'js/scene.js': read('webgl-scene.js'),
       'js/vendor/three.module.min.js': read('vendor/three.module.min.js'),
       'js/vendor/three.core.min.js': read('vendor/three.core.min.js'),
-      'vercel.json': emitVercelJson(w),
+      'vercel.json': emitVercelJson(w, c),
+      ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
       'robots.txt': `User-agent: *\nAllow: /\nSitemap: ${c.canonical.replace(/\/$/, '')}/sitemap.xml\n`,
       'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${c.canonical}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>\n</urlset>\n`,
       'world.json': JSON.stringify({ world: w, ledger: l.toJSON(), content: c, shell, panels: x.panels }, null, 2),

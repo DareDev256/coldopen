@@ -13,6 +13,7 @@
  */
 
 import type { World } from '../world.ts';
+import { emitMeasureHead } from './measure.ts';
 import { railJS } from './rail.ts';
 import { hsl } from '../world.ts';
 import { Ledger, renderValue } from '../ledger.ts';
@@ -483,6 +484,7 @@ export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseSh
 <meta name="description" content="${esc(c.description)}" />
 <meta name="theme-color" content="${w.palette.ground}" />
 <link rel="canonical" href="${esc(c.canonical)}" />
+${emitMeasureHead(c)}
 <meta property="og:type" content="music.musician" />
 <meta property="og:title" content="${esc(c.title)}" />
 <meta property="og:description" content="${esc(c.description)}" />

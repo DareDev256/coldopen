@@ -1,4 +1,5 @@
 import type { World } from '../world.ts';
+import { emitMeasureHead } from './measure.ts';
 import { Ledger, renderValue } from '../ledger.ts';
 import type { SiteContent } from './html.ts';
 import type { CaseShell } from './spatial.ts';
@@ -63,6 +64,7 @@ export function emitSpatialHTML(w: World, c: SiteContent, l: Ledger, shell: Case
 <meta name="description" content="${esc(c.description)}" />
 <meta name="theme-color" content="${w.palette.ground}" />
 <link rel="canonical" href="${esc(c.canonical)}" />
+${emitMeasureHead(c)}
 <meta property="og:type" content="music.musician" />
 <meta property="og:title" content="${esc(c.title)}" />
 <meta property="og:description" content="${esc(c.description)}" />
@@ -119,7 +121,7 @@ ${w.sound ? `<button class="sound mono" id="soundBtn" aria-pressed="false" aria-
       <div class="compartment">
         <div class="mirror">
           <img src="${esc(shell.mirror)}" alt="${esc(w.artist)}" />
-          <span class="mirror-cap mono" data-t="mirror">${esc(c.description)}</span>
+          <span class="mirror-cap mono" data-t="mirror">${esc(c.tagline ?? c.description)}</span>
         </div>
         <button class="pocket" type="button" data-panel="docs" aria-label="${esc(x.docs?.title ?? 'Documents')}">
           <span class="zip" aria-hidden="true"></span>
