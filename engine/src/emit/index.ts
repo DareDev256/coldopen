@@ -20,6 +20,27 @@ export interface BuiltSite {
   readonly audit: WorldAudit;
 }
 
+/**
+ * A favicon every world gets for free, derived from the world's own tokens —
+ * never invented. Ground and accent are the palette this exact site already
+ * committed to (the one-hue rule enforced elsewhere in this engine), and the
+ * glyph is the first letter of the artist as billed, not a stylisation.
+ *
+ * This is why no world needs to supply its own icon file: a browser tab or
+ * bookmark showing a blank/generic icon was a real defect (shortiieraw.com
+ * 404'd on /favicon.ico), and it was an ENGINE gap — no emitter ever wrote a
+ * favicon or linked one, so every world built by this engine had it.
+ */
+export function emitFaviconSVG(w: World): string {
+  const letter = (w.artist || w.name || '?').trim().charAt(0).toUpperCase();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<rect width="64" height="64" rx="14" fill="${w.palette.ground}" />` +
+    `<text x="32" y="34" text-anchor="middle" dominant-baseline="central" ` +
+    `font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif" ` +
+    `font-weight="700" font-size="34" fill="${w.palette.accent}">${letter}</text>` +
+    `</svg>\n`;
+}
+
 export function emitVercelJson(w: World, c?: SiteContent): string {
   const m = measureCSP(c ?? ({} as SiteContent));
   const csp = [
@@ -90,6 +111,7 @@ export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boole
       'index.html': html,
       'css/style.css': spatial ? emitSpatialCSS(w, opts.shell!) : emitCSS(w),
       'js/main.js': spatial ? emitSpatialJS(w) : emitJS(w),
+      'favicon.svg': emitFaviconSVG(w),
       'vercel.json': emitVercelJson(w, c),
       ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
       ...emitSearchConsoleFiles(c),
@@ -124,6 +146,7 @@ function buildWebGL(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: We
       'js/scene.js': read('webgl-scene.js'),
       'js/vendor/three.module.min.js': read('vendor/three.module.min.js'),
       'js/vendor/three.core.min.js': read('vendor/three.core.min.js'),
+      'favicon.svg': emitFaviconSVG(w),
       'vercel.json': emitVercelJson(w, c),
       ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
       ...emitSearchConsoleFiles(c),

@@ -64,6 +64,7 @@ export function emitSpatialHTML(w: World, c: SiteContent, l: Ledger, shell: Case
 <meta name="description" content="${esc(c.description)}" />
 <meta name="theme-color" content="${w.palette.ground}" />
 <link rel="canonical" href="${esc(c.canonical)}" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
 ${emitMeasureHead(c)}
 <meta property="og:type" content="music.musician" />
 <meta property="og:title" content="${esc(c.title)}" />

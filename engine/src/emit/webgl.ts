@@ -58,7 +58,7 @@ export function emitWebGLCSS(w: World, shell: CaseShell): string {
 *{margin:0;padding:0;box-sizing:border-box}
 /* overscroll-behavior-x: none stops a sideways trackpad flick from triggering
    Chrome's swipe-to-go-back, which on a Mac takes the whole page with it. */
-html{background:var(--ground);scroll-behavior:smooth;overscroll-behavior-x:none}
+html{background:var(--ground);scroll-behavior:smooth;overscroll-behavior-x:none;overflow-x:hidden}
 body{background:var(--ground);color:var(--ink);font-family:var(--f-text);overflow-x:hidden;
   overscroll-behavior-x:none;-webkit-font-smoothing:antialiased;min-height:100svh}
 img,video{display:block;max-width:100%}
@@ -484,6 +484,7 @@ export function emitWebGLHTML(w: World, c: SiteContent, l: Ledger, shell: CaseSh
 <meta name="description" content="${esc(c.description)}" />
 <meta name="theme-color" content="${w.palette.ground}" />
 <link rel="canonical" href="${esc(c.canonical)}" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
 ${emitMeasureHead(c)}
 <meta property="og:type" content="music.musician" />
 <meta property="og:title" content="${esc(c.title)}" />

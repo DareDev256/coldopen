@@ -94,7 +94,7 @@ export function emitHTML(w: World, c: SiteContent, l: Ledger): string {
 <meta name="theme-color" content="${w.palette.ground}" />
 <link rel="canonical" href="${esc(c.canonical)}" />
 ${emitMeasureHead(c)}
-<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <meta property="og:type" content="music.musician" />
 <meta property="og:title" content="${esc(c.title)}" />
 <meta property="og:description" content="${esc(c.description)}" />

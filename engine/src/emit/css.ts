@@ -38,7 +38,7 @@ export function emitCSS(w: World): string {
 }
 
 *{ margin:0; padding:0; box-sizing:border-box; }
-html{ background:var(--ground); scroll-behavior:smooth; }
+html{ background:var(--ground); scroll-behavior:smooth; overflow-x:hidden; }
 body{
   background:var(--ground); color:var(--ink);
   font-family:var(--f-text); overflow-x:hidden;

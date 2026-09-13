@@ -58,7 +58,7 @@ export function emitSpatialCSS(w: World, shell: CaseShell): string {
   --hud:.62rem; --gut:clamp(1.1rem,4vw,3rem);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{background:var(--ground);scroll-behavior:smooth}
+html{background:var(--ground);scroll-behavior:smooth;overflow-x:hidden}
 body{background:var(--ground);color:var(--ink);font-family:var(--f-text);overflow-x:hidden;
   -webkit-font-smoothing:antialiased;min-height:100vh}
 img,video{display:block;max-width:100%}
