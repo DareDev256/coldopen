@@ -394,6 +394,7 @@ ${(x.feed ?? []).map(f => {
   <span>© ${new Date().getFullYear()} ${esc(w.artist)}</span>
   <span class="mono">${esc(w.chrome.docCode)}</span>
   <span>Built by <a href="https://jamesdare.com" target="_blank" rel="noopener">DareDev256</a> · COLD OPEN</span>
+  <span><a href="/privacy.html">Privacy</a></span>
 </footer>
 
 <script src="js/main.js" defer></script>
