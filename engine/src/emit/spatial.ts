@@ -262,7 +262,28 @@ body.is-open #ground::after{ background:
 /* the punched hole */
 .tag-body::after{ content:""; position:absolute; left:50%; top:9px; transform:translateX(-50%);
   width:7px; height:7px; border-radius:50%; background:var(--ground); box-shadow:inset 0 1px 2px ${alpha('#000000', 0.6)} }
-.tags.gone{ opacity:0; pointer-events:none; transition:opacity .5s }
+/* ── the tag you chose tears off ────────────────────────────
+   A luggage tag is held on by a perforation, and a tag you have
+   chosen is a tag you pull. The pressed one jerks down (the pull),
+   the perforation gives and it swings on its last teeth about the
+   punched hole, then it comes clean off and drops; the string it
+   hung by snaps back. The case opens WHILE it is still falling —
+   the overlap is what makes the pull cause the opening. The tags
+   you did not choose simply fade. Reference: "The stub tears off"
+   (bencho.dev/finds, @davidhaz). */
+.tags.gone{ pointer-events:none }
+.tags.gone .tag:not(.tearing){ opacity:0; transition:opacity .5s }
+.tag.tearing .tag-body{ transform-origin:50% 9px; animation:tag-tear .78s cubic-bezier(.3,0,.7,.15) forwards;
+  transition:none }
+.tag.tearing::before{ height:0; top:0; transition:height .12s ease-out .1s, top .12s ease-out .1s }
+@keyframes tag-tear{
+  0%   { transform:translateY(0) rotate(0deg); opacity:1 }
+  16%  { transform:translateY(6px) rotate(-14deg); opacity:1 }
+  38%  { transform:translateY(9px) rotate(10deg); opacity:1 }
+  56%  { transform:translateY(15px) rotate(-5deg); opacity:1 }
+  70%  { transform:translateY(34px) rotate(8deg); opacity:1 }
+  100% { transform:translateY(170px) rotate(28deg); opacity:0 }
+}
 
 /* =========================================================
    4 · WHAT IS PACKED INSIDE
@@ -741,6 +762,8 @@ footer a{ color:var(--muted); text-decoration:none } footer a:hover{ color:var(-
   .wordmark{ font-size:clamp(1.2rem,5vw,1.9rem) }
 }
 @media (prefers-reduced-motion:reduce){
+  .tag.tearing .tag-body{ animation:none; opacity:0; transition:opacity .2s }
+
   *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;
      scroll-behavior:auto !important }
   .reveal{ opacity:1; transform:none } .inside{ opacity:1 }

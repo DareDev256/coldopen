@@ -85,7 +85,14 @@ export function emitSpatialJS(w: World): string {
 
   if (tags) {
     tags.querySelectorAll('.tag').forEach(function (t) {
-      t.addEventListener('click', function () { open(t.getAttribute('data-reg')); });
+      t.addEventListener('click', function () {
+        if (opened) return;
+        /* the chosen tag tears off first; the case opens while it is
+           still falling. Reduced motion skips the fall, not the open. */
+        t.classList.add('tearing');
+        var code = t.getAttribute('data-reg');
+        if (reduce) open(code); else setTimeout(function () { open(code); }, 260);
+      });
     });
   }
   if (dial) {
