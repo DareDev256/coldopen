@@ -129,3 +129,42 @@ test('emitHTML never emits an <img> without an alt attribute', () => {
   assert.ok(imgs.length > 0, 'fixture should emit at least one <img>');
   for (const tag of imgs) assert.match(tag, /\salt="/, `missing alt: ${tag}`);
 });
+
+/* ---------- terms (2026-09-16) ----------
+   checklist-20 found 8 of 15 sites with no terms page; shortiieraw.com was
+   the one built by this engine. Same rule as privacy: an engine feature, so
+   every world gets it from a rebuild. */
+import { emitTerms } from '../src/emit/index.ts';
+
+test('emitTerms renders the world\'s own tokens on the privacy shell', () => {
+  const html = emitTerms(world, contentWithLinksAndMailto);
+  assert.match(html, /<!doctype html>/);
+  assert.match(html, /<title>Terms — Carry-On<\/title>/);
+  assert.match(html, /Shortiie Raw/);
+  assert.match(html, /#1B2FE8/);
+  assert.match(html, /SHOR-CA26-4734 · Terms/);
+  assert.match(html, /href="\/privacy\.html"/);
+});
+
+test('emitTerms states that a submission is an inquiry, not a booking', () => {
+  const html = emitTerms(world, contentWithLinksAndMailto);
+  assert.match(html, /is an inquiry, not a booking/);
+  assert.match(html, /mailto:booking@example\.com/);
+});
+
+test('emitTerms falls back to the Instagram link when there is no mailto', () => {
+  const html = emitTerms(world, contentNoMailtoNoMeasure);
+  assert.match(html, /instagram\.com\/x/);
+  assert.doesNotMatch(html, /mailto:/);
+});
+
+test('emitTerms names Ontario law and carries a same-day staleness line', () => {
+  const html = emitTerms(world, contentWithLinksAndMailto);
+  assert.match(html, /laws of Ontario/);
+  assert.match(html, new RegExp(`Last updated ${new Date().toISOString().slice(0, 10)}`));
+});
+
+test('every shell footer links terms next to privacy', () => {
+  const html = emitHTML(world, contentWithLinksAndMailto, new Ledger());
+  assert.match(html, /<a href="\/privacy\.html">Privacy<\/a> · <a href="\/terms\.html">Terms<\/a>/);
+});

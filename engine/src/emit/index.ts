@@ -193,6 +193,94 @@ export function emitPrivacy(w: World, c: SiteContent): string {
 `;
 }
 
+/**
+ * A terms-of-use page every world gets for free, on the same shell as the
+ * privacy page. Like emitPrivacy it states only what the engine can see:
+ * the contact path the rail actually has, the embed origins the CSP opens,
+ * and Ontario as the engine-default jurisdiction. The one substantive
+ * clause — a rail submission is an inquiry, not a booking — is the line
+ * every artist site needs and none of them had (checklist-20, 2026-09-16).
+ */
+export function emitTerms(w: World, c: SiteContent): string {
+  const contact = c.rail.fallbackEmail
+    ? { label: c.rail.fallbackEmail, href: `mailto:${c.rail.fallbackEmail}` }
+    : c.links.find(k => /instagram\.com/i.test(k.href));
+  const updated = new Date().toISOString().slice(0, 10);
+  const host = hostOf(c.canonical);
+  const families = [...new Set([w.type.display.google, w.type.text.google, w.type.mono.google])].join('&family=');
+  const contactLink = contact
+    ? `<a href="${esc(contact.href)}"${/^https?:/i.test(contact.href) ? ' target="_blank" rel="noopener"' : ''}>${esc(contact.label)}</a>`
+    : 'the contact form on the home page';
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terms — ${esc(w.name)}</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=${families}&display=swap" rel="stylesheet" />
+<style>
+  :root{ --ground:${w.palette.ground}; --ink:${w.palette.ink}; --accent:${w.palette.accent}; --muted:${w.palette.muted}; }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--ground);color:var(--ink);overflow-x:hidden}
+  body{font-family:'${w.type.text.family}',system-ui,sans-serif;line-height:1.6}
+  main{max-width:40rem;margin:0 auto;padding:4rem 1.5rem 6rem}
+  .code{font-family:'${w.type.mono.family}',monospace;font-size:.7rem;letter-spacing:.2em;
+    color:var(--muted);text-transform:uppercase;margin:0 0 1.5rem}
+  h1{font-family:'${w.type.display.family}',sans-serif;font-weight:900;text-transform:uppercase;
+    letter-spacing:-.01em;color:var(--accent);font-size:clamp(2rem,6vw,3rem);margin:0 0 2rem}
+  h2{font-family:'${w.type.display.family}',sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:1rem;letter-spacing:.04em;margin:2.5rem 0 .75rem;color:var(--ink)}
+  p{margin:0 0 1rem;opacity:.88}
+  a{color:var(--ink);border-bottom:1px solid var(--muted);text-decoration:none}
+  a:hover{color:var(--accent);border-color:var(--accent)}
+  .meta{margin-top:3rem;font-family:'${w.type.mono.family}',monospace;font-size:.7rem;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .back{display:inline-block;margin-bottom:2rem;font-family:'${w.type.mono.family}',monospace;
+    font-size:.72rem;letter-spacing:.05em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="/">← Back to the site</a>
+  <p class="code">${esc(w.chrome.docCode)} · Terms</p>
+  <h1>Terms of Use</h1>
+
+  <p>These are the terms for using ${esc(host)}, the official site for ${esc(w.artist)}. They are written in plain language. By using the site you agree to them.</p>
+
+  <h2>What the site is</h2>
+  <p>${esc(host)} publishes music, video, images and links about ${esc(w.artist)}. Everything here is offered as-is, for personal, non-commercial viewing.</p>
+
+  <h2>Ownership</h2>
+  <p>The music, recordings, artwork, photographs, video, logos, names and written copy on this site belong to ${esc(w.artist)} or to the people who licensed them. Streaming or viewing them here does not give you a licence to copy, download, re-upload, remix, sell or redistribute them. If you want to use anything from this site, ask first.</p>
+
+  <h2>Bookings and contact</h2>
+  <p>A message sent through the form on this site${contact ? `, or to ${contactLink},` : ''} is an inquiry, not a booking. Nothing is confirmed until ${esc(w.artist)} or their team confirms the date, fee and terms of that engagement in writing.</p>
+
+  <h2>Embedded and linked services</h2>
+  <p>Some panels load content directly from other services: ${EMBED_ORIGINS.map(e => `${esc(e.host)} (${esc(e.note)})`).join(', ')}. Once you interact with one of those, that company's own terms and privacy policy apply. This site does not control them and is not responsible for what they show or how they behave.</p>
+
+  <h2>No warranty</h2>
+  <p>The site is provided without any promise that it is error-free, always available, or that every figure on it is current. Streaming counts, release dates and similar numbers are stated as of the date they were entered and can go stale.</p>
+
+  <h2>Liability</h2>
+  <p>To the extent Ontario law allows, ${esc(w.artist)} and the people who operate this site are not liable for any loss arising from your use of the site or of any service it links to.</p>
+
+  <h2>Governing law</h2>
+  <p>These terms are governed by the laws of Ontario and the federal laws of Canada that apply there.</p>
+
+  <h2>Changes</h2>
+  <p>If these terms change, this page is updated and the date at the top changes with it.</p>
+
+  <p class="meta">Last updated ${updated} · <a href="/privacy.html">Privacy</a></p>
+</main>
+</body>
+</html>
+`;
+}
+
 export function emitVercelJson(w: World, c?: SiteContent): string {
   const m = measureCSP(c ?? ({} as SiteContent));
   const csp = [
@@ -266,6 +354,7 @@ export function build(w: World, c: SiteContent, l: Ledger, opts: { force?: boole
       'favicon.svg': emitFaviconSVG(w),
       '404.html': emit404(w, c),
       'privacy.html': emitPrivacy(w, c),
+      'terms.html': emitTerms(w, c),
       'vercel.json': emitVercelJson(w, c),
       ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
       ...emitSearchConsoleFiles(c),
@@ -303,6 +392,7 @@ function buildWebGL(w: World, c: SiteContent, l: Ledger, shell: CaseShell, x: We
       'favicon.svg': emitFaviconSVG(w),
       '404.html': emit404(w, c),
       'privacy.html': emitPrivacy(w, c),
+      'terms.html': emitTerms(w, c),
       'vercel.json': emitVercelJson(w, c),
       ...(c.measure ? { 'js/ga4.js': emitGA4JS() } : {}),
       ...emitSearchConsoleFiles(c),
